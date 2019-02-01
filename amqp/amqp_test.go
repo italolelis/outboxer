@@ -7,6 +7,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -79,7 +80,7 @@ func testSendSuccessfulMessage(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	conn, err := amqp.Dial("amqp://localhost/")
+	conn, err := amqp.Dial(os.Getenv("ES_DSN"))
 	if err != nil {
 		t.Fatalf("could not connect to amqp: %s", err)
 	}

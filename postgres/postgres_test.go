@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -51,7 +52,7 @@ func testSaveEventSuccessfully(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	db, err := sql.Open("postgres", "postgres://coffee:qwerty123@localhost/reception?sslmode=disable")
+	db, err := sql.Open("postgres", os.Getenv("DS_DSN"))
 	if err != nil {
 		t.Fatalf("could not connect to postgres: %s", err)
 	}
