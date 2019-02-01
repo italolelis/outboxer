@@ -4,7 +4,6 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"database/sql/driver"
 	"errors"
 	"fmt"
 	"hash/crc32"
@@ -79,7 +78,7 @@ func WithInstance(ctx context.Context, db *sql.DB) (*Postgres, error) {
 	return &p, nil
 }
 
-// Close closes the db connetion
+// Close closes the db connection
 func (p *Postgres) Close() error {
 	connErr := p.conn.Close()
 	dbErr := p.db.Close()
@@ -90,10 +89,10 @@ func (p *Postgres) Close() error {
 }
 
 // GetEvents retrieves all the relevant events
-func (p *Postgres) GetEvents(context.Context) ([]*outboxer.OutboxMessage, error) {
+func (p *Postgres) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.OutboxMessage, error) {
 	var events []*outboxer.OutboxMessage
 
-	rows, err := p.db.Query(fmt.Sprintf("SELECT * FROM %s WHERE dispatched = false LIMIT 1000", p.EventStoreTable))
+	rows, err := p.db.Query(fmt.Sprintf("SELECT * FROM %s WHERE dispatched = false LIMIT %d", p.EventStoreTable, batchSize))
 	if err != nil {
 		return events, fmt.Errorf("could not get messages from the store: %s", err)
 	}
@@ -131,7 +130,7 @@ func (p *Postgres) Add(ctx context.Context, evt *outboxer.OutboxMessage) error {
 }
 
 // AddWithinTx creates a transaction and then tries to execute anything within it
-func (p *Postgres) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage, fn func(driver.Tx) error) error {
+func (p *Postgres) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage, fn func(outboxer.ExecerContext) error) error {
 	tx, err := p.conn.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("transaction start failed: %s", err)
@@ -174,7 +173,7 @@ where id = $1;
 }
 
 // Remove removes old messages from the data store
-func (p *Postgres) Remove(ctx context.Context) error {
+func (p *Postgres) Remove(ctx context.Context, dispatchedBefore time.Time, batchSize int32) error {
 	tx, err := p.conn.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("transaction start failed: %s", err)
@@ -189,15 +188,14 @@ WHERE ctid in
     where
         "dispatched" = true and
         "dispatched_at" < $1
-    limit 1000
+    limit %d
 )
 `
-	dispatchedBefore := time.Now().AddDate(0, 0, -5)
 
-	query := fmt.Sprintf(q, p.EventStoreTable, p.EventStoreTable)
-	if _, err := tx.ExecContext(ctx, query, dispatchedBefore.Unix()); err != nil {
+	query := fmt.Sprintf(q, p.EventStoreTable, p.EventStoreTable, batchSize)
+	if _, err := tx.ExecContext(ctx, query, dispatchedBefore); err != nil {
 		tx.Rollback()
-		return fmt.Errorf("could not insert the message into the data store: %s", err)
+		return fmt.Errorf("could not remove messages from the data store: %s", err)
 	}
 
 	if err := tx.Commit(); err != nil {

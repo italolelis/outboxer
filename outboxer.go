@@ -6,7 +6,7 @@ package outboxer
 
 import (
 	"context"
-	"database/sql/driver"
+	"database/sql"
 	"errors"
 	"time"
 )
@@ -19,14 +19,19 @@ var (
 	ErrMissingDataStore = errors.New("a data store is required for the outboxer to work")
 )
 
+// ExecContext defines the exec context method that is used within a transaction
+type ExecerContext interface {
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+}
+
 // DataStore defines the data store methods
 type DataStore interface {
 	// Tries to find the given message in the outbox.
-	GetEvents(context.Context) ([]*OutboxMessage, error)
-	Add(context.Context, *OutboxMessage) error
-	AddWithinTx(context.Context, *OutboxMessage, func(driver.Tx) error) error
-	SetAsDispatched(context.Context, int64) error
-	Remove(context.Context) error
+	GetEvents(ctx context.Context, batchSize int32) ([]*OutboxMessage, error)
+	Add(ctx context.Context, m *OutboxMessage) error
+	AddWithinTx(ctx context.Context, m *OutboxMessage, fn func(ExecerContext) error) error
+	SetAsDispatched(ctx context.Context, id int64) error
+	Remove(ctx context.Context, since time.Time, batchSize int32) error
 }
 
 // EventStream defines the event stream methods
@@ -36,10 +41,13 @@ type EventStream interface {
 
 // Outboxer implements the outbox pattern
 type Outboxer struct {
-	ds              DataStore
-	es              EventStream
-	checkInterval   time.Duration
-	cleanUpInterval time.Duration
+	ds               DataStore
+	es               EventStream
+	checkInterval    time.Duration
+	cleanUpInterval  time.Duration
+	cleanUpBefore    time.Time
+	cleanUpBatchSize int32
+	messageBatchSize int32
 
 	errChan chan error
 	okChan  chan struct{}
@@ -47,7 +55,12 @@ type Outboxer struct {
 
 // New creates a new instance of Outboxer
 func New(opts ...Option) (*Outboxer, error) {
-	o := Outboxer{errChan: make(chan error), okChan: make(chan struct{})}
+	o := Outboxer{
+		errChan:          make(chan error),
+		okChan:           make(chan struct{}),
+		messageBatchSize: 100,
+		cleanUpBatchSize: 100,
+	}
 	for _, opt := range opts {
 		opt(&o)
 	}
@@ -83,7 +96,7 @@ func (o *Outboxer) Send(ctx context.Context, m *OutboxMessage) error {
 }
 
 // SendWithinTx encapsulate any database call within a transaction
-func (o *Outboxer) SendWithinTx(ctx context.Context, evt *OutboxMessage, fn func(driver.Tx) error) error {
+func (o *Outboxer) SendWithinTx(ctx context.Context, evt *OutboxMessage, fn func(ExecerContext) error) error {
 	if err := o.ds.AddWithinTx(ctx, evt, fn); err != nil {
 		return err
 	}
@@ -106,7 +119,7 @@ func (o *Outboxer) StartDispatcher(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			evts, err := o.ds.GetEvents(ctx)
+			evts, err := o.ds.GetEvents(ctx, o.messageBatchSize)
 			if err != nil {
 				o.errChan <- err
 				break
@@ -135,7 +148,7 @@ func (o *Outboxer) StartCleanup(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			if err := o.ds.Remove(ctx); err != nil {
+			if err := o.ds.Remove(ctx, o.cleanUpBefore, o.cleanUpBatchSize); err != nil {
 				o.errChan <- err
 			}
 

@@ -32,3 +32,24 @@ func WithCleanupInterval(t time.Duration) Option {
 		o.cleanUpInterval = t
 	}
 }
+
+// WithCleanUpBefore sets the date that the clean up process should start removing from
+func WithCleanUpBefore(t time.Time) Option {
+	return func(o *Outboxer) {
+		o.cleanUpBefore = t
+	}
+}
+
+// WithCleanUpBatchSize sets the clean up process batch size
+func WithCleanUpBatchSize(s int32) Option {
+	return func(o *Outboxer) {
+		o.cleanUpBatchSize = s
+	}
+}
+
+// WithMessageBatchSize sets how many messages will be sent at a time
+func WithMessageBatchSize(s int32) Option {
+	return func(o *Outboxer) {
+		o.messageBatchSize = s
+	}
+}

@@ -1,10 +1,7 @@
-// +build integration
-
 package amqp
 
 import (
 	"context"
-	"database/sql/driver"
 	"errors"
 	"fmt"
 	"os"
@@ -19,7 +16,7 @@ type inMemDS struct {
 	data []*outboxer.OutboxMessage
 }
 
-func (inmem *inMemDS) GetEvents(ctx context.Context) ([]*outboxer.OutboxMessage, error) {
+func (inmem *inMemDS) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.OutboxMessage, error) {
 	return inmem.data, nil
 }
 
@@ -41,13 +38,13 @@ func (inmem *inMemDS) Add(ctx context.Context, m *outboxer.OutboxMessage) error 
 	return nil
 }
 
-func (inmem *inMemDS) AddWithinTx(ctx context.Context, m *outboxer.OutboxMessage, fn func(driver.Tx) error) error {
+func (inmem *inMemDS) AddWithinTx(ctx context.Context, m *outboxer.OutboxMessage, fn func(outboxer.ExecerContext) error) error {
 	return inmem.Add(ctx, m)
 }
 
-func (inmem *inMemDS) Remove(ctx context.Context) error {
+func (inmem *inMemDS) Remove(ctx context.Context, cleanUpBefore time.Time, batchSize int32) error {
 	for i, m := range inmem.data {
-		if m.DispatchedAt.Time == time.Now().AddDate(0, 0, -5) {
+		if m.DispatchedAt.Time == cleanUpBefore {
 			inmem.data = append(inmem.data[:i], inmem.data[i+1:]...)
 			return nil
 		}
@@ -91,6 +88,7 @@ func testSendSuccessfulMessage(t *testing.T) {
 		outboxer.WithEventStream(es),
 		outboxer.WithCheckInterval(1*time.Second),
 		outboxer.WithCleanupInterval(5*time.Second),
+		outboxer.WithCleanUpBefore(time.Now().AddDate(0, 0, -5)),
 	)
 	if err != nil {
 		t.Fatalf("could not create an outboxer instance: %s", err)
