@@ -1,97 +1,135 @@
-// +build integration
-
 package postgres
 
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/italolelis/outboxer"
-	"github.com/italolelis/outboxer/amqp"
 	_ "github.com/lib/pq"
 )
-
-type inMemES struct {
-	ok bool
-}
-
-// Send mocks the behaviour of the event store
-func (inmem *inMemES) Send(context.Context, *outboxer.OutboxMessage) error {
-	if inmem.ok {
-		return nil
-	}
-
-	return errors.New("mock returned an error")
-}
 
 func TestDatastore(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		scenario string
-		function func(*testing.T)
+		function func(*testing.T, context.Context, outboxer.DataStore)
 	}{
 		{
-			"successfully save the event into the event store",
-			testSaveEventSuccessfully,
+			"successfully add the message into the event store",
+			testAddSuccessfully,
+		},
+		{
+			"successfully set the message as dispatched",
+			testSetDispatchedSuccessfully,
+		},
+		{
+			"add messages within a transaction",
+			testAddTx,
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.scenario, func(t *testing.T) {
-			test.function(t)
-		})
-	}
-}
-
-func testSaveEventSuccessfully(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	db, err := sql.Open("postgres", os.Getenv("DS_DSN"))
 	if err != nil {
-		t.Fatalf("could not connect to postgres: %s", err)
+		t.Fatalf("failed to connect to postgres: %s", err)
 	}
 
 	ds, err := WithInstance(ctx, db)
 	if err != nil {
-		t.Fatalf("could not setup the data store: %s", err)
+		t.Fatalf("failed to setup the data store: %s", err)
 	}
+	defer ds.Close()
 
-	o, err := outboxer.New(
-		outboxer.WithDataStore(ds),
-		outboxer.WithEventStream(&inMemES{true}),
-		outboxer.WithCheckInterval(1*time.Second),
-		outboxer.WithCleanupInterval(5*time.Second),
-	)
-	if err != nil {
-		t.Fatalf("could not create an outboxer instance: %s", err)
+	for _, test := range tests {
+		t.Run(test.scenario, func(t *testing.T) {
+			test.function(t, ctx, ds)
+		})
 	}
+}
 
-	o.Start(ctx)
-	defer o.Stop()
-
-	if err = o.Send(ctx, &outboxer.OutboxMessage{
+func testAddSuccessfully(t *testing.T, ctx context.Context, ds outboxer.DataStore) {
+	if err := ds.Add(ctx, &outboxer.OutboxMessage{
 		Payload: []byte("test payload"),
-		Options: map[string]interface{}{
-			amqp.ExchangeNameOption: "test",
-			amqp.ExchangeTypeOption: "test.send",
-		},
 	}); err != nil {
-		t.Fatalf("could not send message: %s", err)
+		t.Fatalf("failed to add message in the data store: %s", err)
 	}
 
-	for {
-		select {
-		case err := <-o.ErrChan():
-			t.Fatalf("could not send message: %s", err)
-		case <-o.OkChan():
-			t.Log("message received")
-			return
+	msgs, err := ds.GetEvents(ctx, 10)
+	if err != nil {
+		t.Fatalf("failed to retrieve messages from the data store: %s", err)
+	}
+
+	if len(msgs) != 1 {
+		t.Fatalf("was expecting 1 message in the data store but got %d", len(msgs))
+	}
+
+	for _, m := range msgs {
+		err := ds.SetAsDispatched(ctx, m.ID)
+		if err != nil {
+			t.Fatalf("failed to set message as dispatched: %s", err)
 		}
+	}
+
+	if err := ds.Remove(ctx, time.Now(), 10); err != nil {
+		t.Fatalf("failed to remove messages: %s", err)
+	}
+}
+
+func testSetDispatchedSuccessfully(t *testing.T, ctx context.Context, ds outboxer.DataStore) {
+	if err := ds.Add(ctx, &outboxer.OutboxMessage{
+		Payload: []byte("test payload"),
+	}); err != nil {
+		t.Fatalf("failed to add message in the data store: %s", err)
+	}
+
+	msgs, err := ds.GetEvents(ctx, 10)
+	if err != nil {
+		t.Fatalf("failed to retrieve messages from the data store: %s", err)
+	}
+
+	for _, m := range msgs {
+		err := ds.SetAsDispatched(ctx, m.ID)
+		if err != nil {
+			t.Fatalf("failed to set message as dispatched: %s", err)
+		}
+	}
+
+	if err := ds.Remove(ctx, time.Now(), 10); err != nil {
+		t.Fatalf("failed to remove messages: %s", err)
+	}
+}
+
+func testAddTx(t *testing.T, ctx context.Context, ds outboxer.DataStore) {
+	fn := func(tx outboxer.ExecerContext) error {
+		_, err := tx.ExecContext(ctx, "SELECT * from event_store LIMIT 1")
+		return err
+	}
+
+	if err := ds.AddWithinTx(ctx, &outboxer.OutboxMessage{
+		Payload: []byte("test payload"),
+	}, fn); err != nil {
+		t.Fatalf("failed to add message in the data store: %s", err)
+	}
+
+	msgs, err := ds.GetEvents(ctx, 10)
+	if err != nil {
+		t.Fatalf("failed to retrieve messages from the data store: %s", err)
+	}
+
+	for _, m := range msgs {
+		err := ds.SetAsDispatched(ctx, m.ID)
+		if err != nil {
+			t.Fatalf("failed to set message as dispatched: %s", err)
+		}
+	}
+
+	if err := ds.Remove(ctx, time.Now(), 10); err != nil {
+		t.Fatalf("failed to remove messages: %s", err)
 	}
 }
