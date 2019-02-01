@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+
+  postgres:
+    image: postgres:9.6
+    ports:
+      - '5432:5432'
+    environment:
+      LC_ALL: "C.UTF-8"
+      POSTGRES_USER: "outboxer"
+      POSTGRES_PASSWORD: "qwerty123"
+      POSTGRES_DB: "test"
+
+  rabbit:
+    image: rabbitmq:3.6-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"

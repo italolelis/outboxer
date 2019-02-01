@@ -1,0 +1,25 @@
+language: go
+
+go:
+  - stable
+
+services:
+  - docker
+
+env:
+  - GO111MODULE=on
+
+before_install:
+  - docker-compose -f build/docker-compose.yml up -d
+
+install: true
+
+script: go test -tag=integration -v -cover -covermode=atomic ./...
+
+after_success:
+  - go get github.com/mattn/goveralls github.com/go-playground/overalls
+  - $GOPATH/bin/overalls -project=github.com/italolelis/outboxer -covermode=count
+  - $GOPATH/bin/goveralls -coverprofile=overalls.coverprofile -service travis-ci -repotoken $COVERALLS_TOKEN
+
+after_script:
+  - docker-compose -f build/docker-compose.yml down -v
