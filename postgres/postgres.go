@@ -188,7 +188,7 @@ WHERE ctid in
     from %s
     where
         "dispatched" = true and
-        "dispatchedAt" < $1
+        "dispatched_at" < $1
     limit 1000
 )
 `
