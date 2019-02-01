@@ -27,7 +27,7 @@ func (inmem *inMemDS) SetAsDispatched(ctx context.Context, id int64) error {
 	for _, m := range inmem.data {
 		if m.ID == id {
 			m.Dispatched = true
-			m.DispatchedAt = time.Now()
+			m.DispatchedAt.Time = time.Now()
 			return nil
 		}
 	}
@@ -47,7 +47,7 @@ func (inmem *inMemDS) AddWithinTx(ctx context.Context, m *outboxer.OutboxMessage
 
 func (inmem *inMemDS) Remove(ctx context.Context) error {
 	for i, m := range inmem.data {
-		if m.DispatchedAt == time.Now().AddDate(0, 0, -5) {
+		if m.DispatchedAt.Time == time.Now().AddDate(0, 0, -5) {
 			inmem.data = append(inmem.data[:i], inmem.data[i+1:]...)
 			return nil
 		}

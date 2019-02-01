@@ -93,16 +93,16 @@ func (p *Postgres) Close() error {
 func (p *Postgres) GetEvents(context.Context) ([]*outboxer.OutboxMessage, error) {
 	var events []*outboxer.OutboxMessage
 
-	rows, err := p.db.Query(fmt.Sprintf("SELECT * FROM %s WHERE dispatched = true LIMIT 1000", p.EventStoreTable))
+	rows, err := p.db.Query(fmt.Sprintf("SELECT * FROM %s WHERE dispatched = false LIMIT 1000", p.EventStoreTable))
 	if err != nil {
-		return events, fmt.Errorf("could not get events from the store: %s", err)
+		return events, fmt.Errorf("could not get messages from the store: %s", err)
 	}
 
 	for rows.Next() {
 		var e outboxer.OutboxMessage
 		err = rows.Scan(&e.ID, &e.Dispatched, &e.DispatchedAt, &e.Payload, &e.Options, &e.Headers)
 		if err != nil {
-			return events, fmt.Errorf("could not scan event: %s", err)
+			return events, fmt.Errorf("could not scan message: %s", err)
 		}
 		events = append(events, &e)
 	}
@@ -117,10 +117,10 @@ func (p *Postgres) Add(ctx context.Context, evt *outboxer.OutboxMessage) error {
 		return fmt.Errorf("transaction start failed: %s", err)
 	}
 
-	query := fmt.Sprintf(`INSERT INTO %s (dispatched, dispatched_at, payload, options, headers) VALUES ($1, $2, $3, $4, $5)`, p.EventStoreTable)
-	if _, err := tx.ExecContext(ctx, query, evt.Dispatched, evt.DispatchedAt, evt.Payload, evt.Options, evt.Headers); err != nil {
+	query := fmt.Sprintf(`INSERT INTO %s (payload, options, headers) VALUES ($1, $2, $3)`, p.EventStoreTable)
+	if _, err := tx.ExecContext(ctx, query, evt.Payload, evt.Options, evt.Headers); err != nil {
 		tx.Rollback()
-		return fmt.Errorf("could not insert the event into the data store: %s", err)
+		return fmt.Errorf("could not insert the message into the data store: %s", err)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -142,10 +142,10 @@ func (p *Postgres) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage,
 		return err
 	}
 
-	query := fmt.Sprintf(`INSERT INTO %s (dispatched, dispatched_at, payload, options, headers) VALUES ($1, $2, $3, $4, $5)`, p.EventStoreTable)
-	if _, err := tx.ExecContext(ctx, query, evt.Dispatched, evt.DispatchedAt, evt.Payload, evt.Options, evt.Headers); err != nil {
+	query := fmt.Sprintf(`INSERT INTO %s (payload, options, headers) VALUES ($1, $2, $3)`, p.EventStoreTable)
+	if _, err := tx.ExecContext(ctx, query, evt.Payload, evt.Options, evt.Headers); err != nil {
 		tx.Rollback()
-		return fmt.Errorf("could not insert the event into the data store: %s", err)
+		return fmt.Errorf("could not insert the message into the data store: %s", err)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -167,7 +167,7 @@ set
 where id = $1;
 `, p.EventStoreTable)
 	if _, err := p.db.ExecContext(ctx, query, id); err != nil {
-		return fmt.Errorf("could not insert the event into the data store: %s", err)
+		return fmt.Errorf("could set message as dispatched: %s", err)
 	}
 
 	return nil
@@ -197,7 +197,7 @@ WHERE ctid in
 	query := fmt.Sprintf(q, p.EventStoreTable, p.EventStoreTable)
 	if _, err := tx.ExecContext(ctx, query, dispatchedBefore.Unix()); err != nil {
 		tx.Rollback()
-		return fmt.Errorf("could not insert the event into the data store: %s", err)
+		return fmt.Errorf("could not insert the message into the data store: %s", err)
 	}
 
 	if err := tx.Commit(); err != nil {

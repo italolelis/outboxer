@@ -8,7 +8,7 @@ Outboxer was designed to simplify the tough work of orchestrating message reliab
 
 > How can producers reliably send messages when the broker/consumer is unavailable?
 
-If you have a distributed system archirtecture and especially is dealing with Event Driven Architecture, you might want to use *outboxer*.
+If you have a distributed system architecture and especially is dealing with Event Driven Architecture, you might want to use *outboxer*.
 
 The first thing to do is include the package in your project
 
