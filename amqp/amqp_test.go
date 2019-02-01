@@ -4,6 +4,7 @@ package amqp
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"testing"
@@ -37,6 +38,10 @@ func (inmem *inMemDS) Add(ctx context.Context, m *outboxer.OutboxMessage) error 
 	inmem.data = append(inmem.data, m)
 
 	return nil
+}
+
+func (inmem *inMemDS) AddWithinTx(ctx context.Context, m *outboxer.OutboxMessage, fn func(driver.Tx) error) error {
+	return inmem.Add(ctx, m)
 }
 
 func (inmem *inMemDS) Remove(ctx context.Context) error {
