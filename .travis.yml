@@ -17,7 +17,7 @@ install: true
 before_script:
   - docker-compose -f build/docker-compose.yml up -d
 
-script: go test -tag=integration -v -cover -covermode=atomic ./...
+script: go test -tags=integration -v -cover -covermode=atomic ./...
 
 after_script:
   - docker-compose -f build/docker-compose.yml down -v
