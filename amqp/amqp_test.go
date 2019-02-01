@@ -2,58 +2,14 @@ package amqp
 
 import (
 	"context"
-	"errors"
-	"fmt"
+	"github.com/italolelis/outboxer"
 	"os"
 	"testing"
-	"time"
 
-	"github.com/italolelis/outboxer"
 	"github.com/streadway/amqp"
 )
 
-type inMemDS struct {
-	data []*outboxer.OutboxMessage
-}
-
-func (inmem *inMemDS) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.OutboxMessage, error) {
-	return inmem.data, nil
-}
-
-func (inmem *inMemDS) SetAsDispatched(ctx context.Context, id int64) error {
-	for _, m := range inmem.data {
-		if m.ID == id {
-			m.Dispatched = true
-			m.DispatchedAt.Time = time.Now()
-			return nil
-		}
-	}
-
-	return fmt.Errorf("message not found")
-}
-
-func (inmem *inMemDS) Add(ctx context.Context, m *outboxer.OutboxMessage) error {
-	inmem.data = append(inmem.data, m)
-
-	return nil
-}
-
-func (inmem *inMemDS) AddWithinTx(ctx context.Context, m *outboxer.OutboxMessage, fn func(outboxer.ExecerContext) error) error {
-	return inmem.Add(ctx, m)
-}
-
-func (inmem *inMemDS) Remove(ctx context.Context, cleanUpBefore time.Time, batchSize int32) error {
-	for i, m := range inmem.data {
-		if m.DispatchedAt.Time == cleanUpBefore {
-			inmem.data = append(inmem.data[:i], inmem.data[i+1:]...)
-			return nil
-		}
-	}
-
-	return errors.New("event not found")
-}
-
-func TestRabbit(t *testing.T) {
+func TestAMQPEventStream(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -79,41 +35,19 @@ func testSendSuccessfulMessage(t *testing.T) {
 
 	conn, err := amqp.Dial(os.Getenv("ES_DSN"))
 	if err != nil {
-		t.Fatalf("could not connect to amqp: %s", err)
+		t.Fatalf("failed to connect to amqp: %s", err)
 	}
+	defer conn.Close()
 
 	es := NewAMQP(conn)
-	o, err := outboxer.New(
-		outboxer.WithDataStore(&inMemDS{}),
-		outboxer.WithEventStream(es),
-		outboxer.WithCheckInterval(1*time.Second),
-		outboxer.WithCleanupInterval(5*time.Second),
-		outboxer.WithCleanUpBefore(time.Now().AddDate(0, 0, -5)),
-	)
-	if err != nil {
-		t.Fatalf("could not create an outboxer instance: %s", err)
-	}
-
-	o.Start(ctx)
-	defer o.Stop()
-
-	if err = o.Send(ctx, &outboxer.OutboxMessage{
+	if err := es.Send(ctx, &outboxer.OutboxMessage{
 		Payload: []byte("test payload"),
 		Options: map[string]interface{}{
-			"exchange.name": "test",
-			"routing_key":   "test.send",
+			ExchangeNameOption: "test",
+			ExchangeTypeOption: "topic",
+			RoutingKeyOption:   "test.send",
 		},
 	}); err != nil {
-		t.Fatalf("could not send message: %s", err)
-	}
-
-	for {
-		select {
-		case err := <-o.ErrChan():
-			t.Fatalf("could not send message: %s", err)
-		case <-o.OkChan():
-			t.Log("message received")
-			return
-		}
+		t.Fatalf("an error was not expected: %s", err)
 	}
 }
