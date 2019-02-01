@@ -1,6 +1,7 @@
 # Outboxer
 
 [![Build Status](https://travis-ci.com/italolelis/outboxer.svg?branch=master)](https://travis-ci.com/italolelis/outboxer)
+[![Coverage Status](https://coveralls.io/repos/github/italolelis/outboxer/badge.svg?branch=master)](https://coveralls.io/github/italolelis/outboxer?branch=master)
 
 Outboxer is a go library that implements the [outbox pattern](http://gistlabs.com/2014/05/the-outbox/).
 
@@ -27,6 +28,7 @@ ds, err := WithInstance(ctx, db)
 if err != nil {
     t.Fatalf("could not setup the data store: %s", err)
 }
+defer ds.Close()
 
 // we create an event stream passing the amqp connection
 es := NewAMQP(conn)
