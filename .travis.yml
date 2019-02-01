@@ -17,12 +17,11 @@ install: true
 before_script:
   - docker-compose -f build/docker-compose.yml up -d
 
-script: go test -tags=integration -v -cover -covermode=atomic ./...
+script: go test -tags=integration -v -cover -covermode=atomic -coverprofile=tests.out ./...
 
 after_script:
   - docker-compose -f build/docker-compose.yml down -v
 
 after_success:
-  - go get github.com/mattn/goveralls github.com/go-playground/overalls
-  - $GOPATH/bin/overalls -project=github.com/italolelis/outboxer -covermode=count
-  - $GOPATH/bin/goveralls -coverprofile=overalls.coverprofile -service travis-ci -repotoken $COVERALLS_TOKEN
+  - go get github.com/mattn/goveralls
+  - $GOPATH/bin/goveralls -coverprofile=tests.out -service travis-ci -repotoken $COVERALLS_TOKEN

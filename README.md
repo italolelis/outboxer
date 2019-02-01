@@ -1,5 +1,7 @@
 # Outboxer
 
+[![Build Status](https://travis-ci.com/italolelis/outboxer.svg?branch=master)](https://travis-ci.com/italolelis/outboxer)
+
 Outboxer is a go library that implements the [outbox pattern](http://gistlabs.com/2014/05/the-outbox/).
 
 ## Getting Started
