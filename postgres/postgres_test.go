@@ -46,6 +46,10 @@ func TestDatastore(t *testing.T) {
 	}
 	defer ds.Close()
 
+	if err := ds.Remove(ctx, time.Now(), 20); err != nil {
+		t.Fatalf("failed to clean the data store before starting tests for postgres: %s", err)
+	}
+
 	for _, test := range tests {
 		t.Run(test.scenario, func(t *testing.T) {
 			test.function(ctx, t, ds)
