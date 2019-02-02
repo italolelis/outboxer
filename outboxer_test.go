@@ -49,12 +49,14 @@ func testSendSuccessfulMessage(t *testing.T) {
 		t.Fatalf("could not connect to amqp: %s", err)
 	}
 
+	t.Log("created postgres datastore")
 	ds, err := postgres.WithInstance(ctx, db)
 	if err != nil {
 		t.Fatalf("could not setup the data store: %s", err)
 	}
 	defer ds.Close()
 
+	t.Log("created amqp event stream")
 	es := amqpOut.NewAMQP(conn)
 	o, err := outboxer.New(
 		outboxer.WithDataStore(ds),
@@ -69,9 +71,11 @@ func testSendSuccessfulMessage(t *testing.T) {
 		t.Fatalf("could not create an outboxer instance: %s", err)
 	}
 
+	t.Log("started to listen for new messages")
 	o.Start(ctx)
 	defer o.Stop()
 
+	t.Log("sending message...")
 	if err = o.Send(ctx, &outboxer.OutboxMessage{
 		Payload: []byte("test payload"),
 		Options: map[string]interface{}{
@@ -81,5 +85,19 @@ func testSendSuccessfulMessage(t *testing.T) {
 		},
 	}); err != nil {
 		t.Fatalf("could not send message: %s", err)
+	}
+
+	t.Log("waiting for succesfully sent messages...")
+	for {
+		select {
+		case err := <-o.ErrChan():
+			t.Fatalf("could not send message: %s", err)
+			return
+		case <-o.OkChan():
+			t.Log("message received")
+			return
+		case <-ctx.Done():
+			return
+		}
 	}
 }
