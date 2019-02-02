@@ -62,6 +62,8 @@ func testSendSuccessfulMessage(t *testing.T) {
 		outboxer.WithCheckInterval(1*time.Second),
 		outboxer.WithCleanupInterval(5*time.Second),
 		outboxer.WithCleanUpBefore(time.Now().AddDate(0, 0, -5)),
+		outboxer.WithCleanUpBatchSize(10),
+		outboxer.WithMessageBatchSize(10),
 	)
 	if err != nil {
 		t.Fatalf("could not create an outboxer instance: %s", err)
