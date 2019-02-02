@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.com/italolelis/outboxer.svg?branch=master)](https://travis-ci.com/italolelis/outboxer)
 [![Coverage Status](https://coveralls.io/repos/github/italolelis/outboxer/badge.svg?branch=master)](https://coveralls.io/github/italolelis/outboxer?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/italolelis/outboxer)](https://goreportcard.com/report/github.com/italolelis/outboxer)
 [![GoDoc](https://godoc.org/github.com/italolelis/outboxer?status.svg)](https://godoc.org/github.com/italolelis/outboxer)
 
 Outboxer is a go library that implements the [outbox pattern](http://gistlabs.com/2014/05/the-outbox/).
@@ -24,25 +25,43 @@ go get github.com/italolelis/outboxer
 Let's setup a simple example where you are using `RabbitMQ` and `Postgres` as your outbox pattern components:
 
 ```go
-// we need to create a data store instance first
-ds, err := WithInstance(ctx, db)
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+db, err := sql.Open("postgres", os.Getenv("DS_DSN"))
 if err != nil {
-    t.Fatalf("could not setup the data store: %s", err)
+    fmt.Printf("could not connect to amqp: %s", err)
+    return
+}
+
+conn, err := amqp.Dial(os.Getenv("ES_DSN"))
+if err != nil {
+    fmt.Printf("could not connect to amqp: %s", err)
+    return
+}
+
+// we need to create a data store instance first
+ds, err := postgres.WithInstance(ctx, db)
+if err != nil {
+    fmt.Printf("could not setup the data store: %s", err)
+    return
 }
 defer ds.Close()
 
 // we create an event stream passing the amqp connection
-es := NewAMQP(conn)
+es := amqpOut.NewAMQP(conn)
 
 // now we create an outboxer instance passing the data store and event stream
 o, err := outboxer.New(
-    outboxer.WithDataStore(&inMemDS{}),
+    outboxer.WithDataStore(ds),
     outboxer.WithEventStream(es),
     outboxer.WithCheckInterval(1*time.Second),
     outboxer.WithCleanupInterval(5*time.Second),
+    outboxer.WithCleanUpBefore(time.Now().AddDate(0, 0, -5)),
 )
 if err != nil {
-    fmt.Errorf("could not create an outboxer instance: %s", err)
+    fmt.Printf("could not create an outboxer instance: %s", err)
+    return
 }
 
 // here we initialize the outboxer checks and cleanup go rotines
@@ -53,25 +72,25 @@ defer o.Stop()
 if err = o.Send(ctx, &outboxer.OutboxMessage{
     Payload: []byte("test payload"),
     Options: map[string]interface{}{
-        amqp.ExchangeNameOption: "test",
-        amqp.ExchangeTypeOption: "topic",
-        amqp.RoutingKeyOption: "test.send",
+        amqpOut.ExchangeNameOption: "test",
+        amqpOut.ExchangeTypeOption: "topic",
+        amqpOut.RoutingKeyOption:   "test.send",
     },
 }); err != nil {
-    fmt.Errorf("could not send message: %s", err)
+    fmt.Printf("could not send message: %s", err)
+    return
 }
 
 // we can also listen for errors and ok messages that were send
-go func() {
-   for {
-        select {
-        case err := <-o.ErrChan():
-            fmt.Errorf("could not send message: %s", err)
-        case <-o.OkChan():
-            fmt.Print("message received")
-        }
+for {
+    select {
+    case err := <-o.ErrChan():
+        fmt.Printf("could not send message: %s", err)
+    case <-o.OkChan():
+        fmt.Printf("message received")
+        return
     }
-}()
+}
 ```
 
 ## Features

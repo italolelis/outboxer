@@ -29,6 +29,7 @@ func ExampleNew() {
 		return
 	}
 
+	// we need to create a data store instance first
 	ds, err := postgres.WithInstance(ctx, db)
 	if err != nil {
 		fmt.Printf("could not setup the data store: %s", err)
@@ -36,7 +37,10 @@ func ExampleNew() {
 	}
 	defer ds.Close()
 
+	// we create an event stream passing the amqp connection
 	es := amqpOut.NewAMQP(conn)
+
+	// now we create an outboxer instance passing the data store and event stream
 	o, err := outboxer.New(
 		outboxer.WithDataStore(ds),
 		outboxer.WithEventStream(es),
@@ -49,9 +53,11 @@ func ExampleNew() {
 		return
 	}
 
+	// here we initialize the outboxer checks and cleanup go rotines
 	o.Start(ctx)
 	defer o.Stop()
 
+	// finally we are ready to send messages
 	if err = o.Send(ctx, &outboxer.OutboxMessage{
 		Payload: []byte("test payload"),
 		Options: map[string]interface{}{
@@ -64,6 +70,7 @@ func ExampleNew() {
 		return
 	}
 
+	// we can also listen for errors and ok messages that were send
 	for {
 		select {
 		case err := <-o.ErrChan():
