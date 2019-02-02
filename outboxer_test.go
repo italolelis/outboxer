@@ -82,14 +82,4 @@ func testSendSuccessfulMessage(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("could not send message: %s", err)
 	}
-
-	for {
-		select {
-		case err := <-o.ErrChan():
-			t.Fatalf("could not send message: %s", err)
-		case <-o.OkChan():
-			t.Log("message received")
-			return
-		}
-	}
 }
