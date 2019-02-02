@@ -3,55 +3,36 @@ package outboxer_test
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"os"
-	"testing"
 	"time"
 
 	"github.com/italolelis/outboxer"
-
 	amqpOut "github.com/italolelis/outboxer/amqp"
 	"github.com/italolelis/outboxer/postgres"
-	_ "github.com/lib/pq"
 	"github.com/streadway/amqp"
 )
 
-func TestIntegrationOutboxer(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		scenario string
-		function func(*testing.T)
-	}{
-		{
-			"send successful message",
-			testSendSuccessfulMessage,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.scenario, func(t *testing.T) {
-			test.function(t)
-		})
-	}
-}
-
-func testSendSuccessfulMessage(t *testing.T) {
+func ExampleNew() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	db, err := sql.Open("postgres", os.Getenv("DS_DSN"))
 	if err != nil {
-		t.Fatalf("could not connect to amqp: %s", err)
+		fmt.Printf("could not connect to amqp: %s", err)
+		return
 	}
 
 	conn, err := amqp.Dial(os.Getenv("ES_DSN"))
 	if err != nil {
-		t.Fatalf("could not connect to amqp: %s", err)
+		fmt.Printf("could not connect to amqp: %s", err)
+		return
 	}
 
 	ds, err := postgres.WithInstance(ctx, db)
 	if err != nil {
-		t.Fatalf("could not setup the data store: %s", err)
+		fmt.Printf("could not setup the data store: %s", err)
+		return
 	}
 	defer ds.Close()
 
@@ -64,7 +45,8 @@ func testSendSuccessfulMessage(t *testing.T) {
 		outboxer.WithCleanUpBefore(time.Now().AddDate(0, 0, -5)),
 	)
 	if err != nil {
-		t.Fatalf("could not create an outboxer instance: %s", err)
+		fmt.Printf("could not create an outboxer instance: %s", err)
+		return
 	}
 
 	o.Start(ctx)
@@ -78,15 +60,16 @@ func testSendSuccessfulMessage(t *testing.T) {
 			amqpOut.RoutingKeyOption:   "test.send",
 		},
 	}); err != nil {
-		t.Fatalf("could not send message: %s", err)
+		fmt.Printf("could not send message: %s", err)
+		return
 	}
 
 	for {
 		select {
 		case err := <-o.ErrChan():
-			t.Fatalf("could not send message: %s", err)
+			fmt.Printf("could not send message: %s", err)
 		case <-o.OkChan():
-			t.Log("message received")
+			fmt.Printf("message received")
 			return
 		}
 	}

@@ -207,12 +207,12 @@ WHERE ctid in
 
 // Lock implements explicit locking
 // https://www.postgresql.org/docs/9.6/static/explicit-locking.html#ADVISORY-LOCKS
-func (p *Postgres) Lock(ctx context.Context) error {
+func (p *Postgres) lock(ctx context.Context) error {
 	if p.isLocked {
 		return ErrLocked
 	}
 
-	aid, err := GenerateAdvisoryLockID(p.DatabaseName, p.SchemaName)
+	aid, err := generateAdvisoryLockID(p.DatabaseName, p.SchemaName)
 	if err != nil {
 		return err
 	}
@@ -229,12 +229,12 @@ func (p *Postgres) Lock(ctx context.Context) error {
 }
 
 // Unlock is the implementation of the unlock for explicit locking
-func (p *Postgres) Unlock(ctx context.Context) error {
+func (p *Postgres) unlock(ctx context.Context) error {
 	if !p.isLocked {
 		return nil
 	}
 
-	aid, err := GenerateAdvisoryLockID(p.DatabaseName, p.SchemaName)
+	aid, err := generateAdvisoryLockID(p.DatabaseName, p.SchemaName)
 	if err != nil {
 		return err
 	}
@@ -248,12 +248,12 @@ func (p *Postgres) Unlock(ctx context.Context) error {
 }
 
 func (p *Postgres) ensureTable(ctx context.Context) (err error) {
-	if err = p.Lock(ctx); err != nil {
+	if err = p.lock(ctx); err != nil {
 		return err
 	}
 
 	defer func() {
-		if e := p.Unlock(ctx); e != nil {
+		if e := p.unlock(ctx); e != nil {
 			if err == nil {
 				err = e
 			} else {
@@ -264,12 +264,12 @@ func (p *Postgres) ensureTable(ctx context.Context) (err error) {
 
 	query := fmt.Sprintf(`
 CREATE TABLE IF NOT EXISTS %[1]s (
-id SERIAL not null primary key, 
-dispatched boolean not null default false, 
-dispatched_at timestamp,
-payload bytea not null,
-options jsonb,
-headers jsonb
+	id SERIAL not null primary key, 
+	dispatched boolean not null default false, 
+	dispatched_at timestamp,
+	payload bytea not null,
+	options jsonb,
+	headers jsonb
 );
 
 CREATE INDEX IF NOT EXISTS "index_dispatchedAt" ON %[1]s using btree (dispatched_at asc nulls last);
@@ -283,8 +283,8 @@ CREATE INDEX IF NOT EXISTS "index_dispatched" ON %[1]s using btree (dispatched a
 	return nil
 }
 
-// GenerateAdvisoryLockID inspired by rails migrations, see https://goo.gl/8o9bCT
-func GenerateAdvisoryLockID(databaseName string, additionalNames ...string) (string, error) {
+// generateAdvisoryLockID inspired by rails migrations, see https://goo.gl/8o9bCT
+func generateAdvisoryLockID(databaseName string, additionalNames ...string) (string, error) {
 	if len(additionalNames) > 0 {
 		databaseName = strings.Join(append(additionalNames, databaseName), "\x00")
 	}
