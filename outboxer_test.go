@@ -16,26 +16,6 @@ import (
 )
 
 func TestIntegrationOutboxer(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		scenario string
-		function func(*testing.T)
-	}{
-		{
-			"send successful message",
-			testSendSuccessfulMessage,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.scenario, func(t *testing.T) {
-			test.function(t)
-		})
-	}
-}
-
-func testSendSuccessfulMessage(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -75,6 +55,24 @@ func testSendSuccessfulMessage(t *testing.T) {
 	o.Start(ctx)
 	defer o.Stop()
 
+	done := make(chan struct{})
+
+	go func(ob *outboxer.Outboxer) {
+		for {
+			select {
+			case err := <-ob.ErrChan():
+				t.Fatalf("could not send message: %s", err)
+				return
+			case <-ob.OkChan():
+				t.Log("message received")
+				done <- struct{}{}
+				return
+			case <-ctx.Done():
+				return
+			}
+		}
+	}(o)
+
 	t.Log("sending message...")
 	if err = o.Send(ctx, &outboxer.OutboxMessage{
 		Payload: []byte("test payload"),
@@ -88,16 +86,6 @@ func testSendSuccessfulMessage(t *testing.T) {
 	}
 
 	t.Log("waiting for succesfully sent messages...")
-	for {
-		select {
-		case err := <-o.ErrChan():
-			t.Fatalf("could not send message: %s", err)
-			return
-		case <-o.OkChan():
-			t.Log("message received")
-			return
-		case <-ctx.Done():
-			return
-		}
-	}
+	<-done
+	t.Log("messages received")
 }
