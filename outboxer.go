@@ -19,7 +19,7 @@ var (
 	ErrMissingDataStore = errors.New("a data store is required for the outboxer to work")
 )
 
-// ExecContext defines the exec context method that is used within a transaction
+// ExecerContext defines the exec context method that is used within a transaction
 type ExecerContext interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 }
