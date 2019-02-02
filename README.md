@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.com/italolelis/outboxer.svg?branch=master)](https://travis-ci.com/italolelis/outboxer)
 [![Coverage Status](https://coveralls.io/repos/github/italolelis/outboxer/badge.svg?branch=master)](https://coveralls.io/github/italolelis/outboxer?branch=master)
+[![GoDoc](https://godoc.org/github.com/italolelis/outboxer?status.svg)](https://godoc.org/github.com/italolelis/outboxer)
 
 Outboxer is a go library that implements the [outbox pattern](http://gistlabs.com/2014/05/the-outbox/).
 

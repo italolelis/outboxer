@@ -88,20 +88,12 @@ func (o *Outboxer) OkChan() <-chan struct{} {
 
 // Send sends a message
 func (o *Outboxer) Send(ctx context.Context, m *OutboxMessage) error {
-	if err := o.ds.Add(ctx, m); err != nil {
-		return err
-	}
-
-	return nil
+	return o.ds.Add(ctx, m)
 }
 
 // SendWithinTx encapsulate any database call within a transaction
 func (o *Outboxer) SendWithinTx(ctx context.Context, evt *OutboxMessage, fn func(ExecerContext) error) error {
-	if err := o.ds.AddWithinTx(ctx, evt, fn); err != nil {
-		return err
-	}
-
-	return nil
+	return o.ds.AddWithinTx(ctx, evt, fn)
 }
 
 // Start encapsulates two go routines. Starts the dispatcher, which is responsible for getting the messages

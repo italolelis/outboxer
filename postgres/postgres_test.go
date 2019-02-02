@@ -16,7 +16,7 @@ func TestDatastore(t *testing.T) {
 
 	tests := []struct {
 		scenario string
-		function func(*testing.T, context.Context, outboxer.DataStore)
+		function func(context.Context, *testing.T, outboxer.DataStore)
 	}{
 		{
 			"successfully add the message into the event store",
@@ -48,12 +48,12 @@ func TestDatastore(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.scenario, func(t *testing.T) {
-			test.function(t, ctx, ds)
+			test.function(ctx, t, ds)
 		})
 	}
 }
 
-func testAddSuccessfully(t *testing.T, ctx context.Context, ds outboxer.DataStore) {
+func testAddSuccessfully(ctx context.Context, t *testing.T, ds outboxer.DataStore) {
 	if err := ds.Add(ctx, &outboxer.OutboxMessage{
 		Payload: []byte("test payload"),
 	}); err != nil {
@@ -81,7 +81,7 @@ func testAddSuccessfully(t *testing.T, ctx context.Context, ds outboxer.DataStor
 	}
 }
 
-func testSetDispatchedSuccessfully(t *testing.T, ctx context.Context, ds outboxer.DataStore) {
+func testSetDispatchedSuccessfully(ctx context.Context, t *testing.T, ds outboxer.DataStore) {
 	if err := ds.Add(ctx, &outboxer.OutboxMessage{
 		Payload: []byte("test payload"),
 	}); err != nil {
@@ -105,7 +105,7 @@ func testSetDispatchedSuccessfully(t *testing.T, ctx context.Context, ds outboxe
 	}
 }
 
-func testAddTx(t *testing.T, ctx context.Context, ds outboxer.DataStore) {
+func testAddTx(ctx context.Context, t *testing.T, ds outboxer.DataStore) {
 	fn := func(tx outboxer.ExecerContext) error {
 		_, err := tx.ExecContext(ctx, "SELECT * from event_store LIMIT 1")
 		return err

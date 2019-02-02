@@ -2,10 +2,10 @@ package amqp
 
 import (
 	"context"
-	"github.com/italolelis/outboxer"
 	"os"
 	"testing"
 
+	"github.com/italolelis/outboxer"
 	"github.com/streadway/amqp"
 )
 
