@@ -118,6 +118,6 @@ func TestIntegrationOutboxer(t *testing.T) {
 		t.Fatalf("could not send message: %s", err)
 	}
 
-	t.Log("waiting for succesfully sent messages...")
+	t.Log("waiting for successfully sent messages...")
 	<-done
 }

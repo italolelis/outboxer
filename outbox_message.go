@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
 )
 
@@ -50,6 +51,10 @@ func (p DynamicValues) Value() (driver.Value, error) {
 
 // Scan scans a database json representation into a []Item
 func (p *DynamicValues) Scan(src interface{}) error {
+	v := reflect.ValueOf(src)
+	if !v.IsValid() || v.IsNil() {
+		return nil
+	}
 	if data, ok := src.([]byte); ok {
 		return json.Unmarshal(data, &p)
 	}

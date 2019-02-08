@@ -88,12 +88,8 @@ func testDynamicValuesScan(t *testing.T) {
 		t.Fatal("an error was expected when parsing an empty slice of bytes")
 	}
 
-	if err := dv.Scan("wrong"); err == nil {
-		t.Fatal("an error was expected when scaning a string")
-	}
-
-	if err := dv.Scan(nil); err == nil {
-		t.Fatal("an error was expected when scaning a nil value")
+	if err := dv.Scan(nil); err != nil {
+		t.Fatal("no error was expected when scanning a nil value")
 	}
 }
 
