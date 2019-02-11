@@ -67,7 +67,7 @@ func (inmem *inMemES) Send(context.Context, *outboxer.OutboxMessage) error {
 	return errors.New("mock returned an error")
 }
 
-func TestIntegrationOutboxer(t *testing.T) {
+func TestOutboxer_Send(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -120,4 +120,80 @@ func TestIntegrationOutboxer(t *testing.T) {
 
 	t.Log("waiting for successfully sent messages...")
 	<-done
+}
+
+func TestOutboxer_SendWithinTx(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	o, err := outboxer.New(
+		outboxer.WithDataStore(&inMemDS{}),
+		outboxer.WithEventStream(&inMemES{true}),
+		outboxer.WithCheckInterval(1*time.Second),
+		outboxer.WithCleanupInterval(5*time.Second),
+		outboxer.WithCleanUpBefore(time.Now().AddDate(0, 0, -5)),
+		outboxer.WithCleanUpBatchSize(10),
+		outboxer.WithMessageBatchSize(10),
+	)
+	if err != nil {
+		t.Fatalf("could not create an outboxer instance: %s", err)
+	}
+
+	t.Log("started to listen for new messages")
+	o.Start(ctx)
+	defer o.Stop()
+
+	done := make(chan struct{})
+
+	go func(ob *outboxer.Outboxer) {
+		for {
+			select {
+			case err := <-ob.ErrChan():
+				t.Fatalf("could not send message: %s", err)
+				return
+			case <-ob.OkChan():
+				t.Log("message received")
+				done <- struct{}{}
+				return
+			case <-ctx.Done():
+				return
+			}
+		}
+	}(o)
+
+	t.Log("sending message...")
+	if err = o.SendWithinTx(ctx, &outboxer.OutboxMessage{
+		Payload: []byte("test payload"),
+		Options: map[string]interface{}{
+			amqpOut.ExchangeNameOption: "test",
+			amqpOut.ExchangeTypeOption: "topic",
+			amqpOut.RoutingKeyOption:   "test.send",
+		},
+	}, func(execer outboxer.ExecerContext) error {
+		if _, err := execer.ExecContext(ctx, "SELECT * FROM orders LIMIT 1"); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		t.Fatalf("could not send message within transaction: %s", err)
+	}
+
+	t.Log("waiting for successfully sent messages...")
+	<-done
+}
+
+func TestOutboxer_WithWrongParams(t *testing.T) {
+	_, err := outboxer.New(
+		outboxer.WithEventStream(&inMemES{true}),
+	)
+	if err == nil {
+		t.Fatalf("this should return an error ErrMissingDataStore")
+	}
+
+	_, err = outboxer.New(
+		outboxer.WithDataStore(&inMemDS{}),
+	)
+	if err == nil {
+		t.Fatalf("this should return an error ErrMissingEventStream")
+	}
 }

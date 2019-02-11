@@ -46,6 +46,10 @@ func testSendSuccessfulMessage(t *testing.T) {
 			ExchangeNameOption: "test",
 			ExchangeTypeOption: "topic",
 			RoutingKeyOption:   "test.send",
+			ExchangeDurable:    true,
+			ExchangeAutoDelete: false,
+			ExchangeInternal:   false,
+			ExchangeNoWait:     false,
 		},
 	}); err != nil {
 		t.Fatalf("an error was not expected: %s", err)

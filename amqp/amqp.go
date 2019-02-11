@@ -18,6 +18,18 @@ const (
 	// ExchangeTypeOption is the exchange type option
 	ExchangeTypeOption = "exchange.type"
 
+	// ExchangeDurable is the exchange durable option
+	ExchangeDurable = "exchange.durable"
+
+	// ExchangeAutoDelete is the exchange auto delete option
+	ExchangeAutoDelete = "exchange.auto_delete"
+
+	// ExchangeInternal is the exchange internal option
+	ExchangeInternal = "exchange.internal"
+
+	// ExchangeNoWait is the exchange no wait option
+	ExchangeNoWait = "exchange.no_wait"
+
 	// RoutingKeyOption is the routing key option
 	RoutingKeyOption = "routing_key"
 )
@@ -94,19 +106,19 @@ func (r *AMQP) parseOptions(opts outboxer.DynamicValues) *options {
 		opt.exchangeType = data.(string)
 	}
 
-	if data, ok := opts["exchange.durable"]; ok {
+	if data, ok := opts[ExchangeDurable]; ok {
 		opt.durable = data.(bool)
 	}
 
-	if data, ok := opts["exchange.auto_delete"]; ok {
+	if data, ok := opts[ExchangeAutoDelete]; ok {
 		opt.autoDelete = data.(bool)
 	}
 
-	if data, ok := opts["exchange.internal"]; ok {
+	if data, ok := opts[ExchangeInternal]; ok {
 		opt.internal = data.(bool)
 	}
 
-	if data, ok := opts["exchange.no_wait"]; ok {
+	if data, ok := opts[ExchangeNoWait]; ok {
 		opt.noWait = data.(bool)
 	}
 
