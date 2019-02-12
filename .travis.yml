@@ -11,6 +11,7 @@ env:
 
 before_install:
   - sudo /etc/init.d/postgresql stop
+  - sudo /etc/init.d/mysql stop
 
 install: true
 
