@@ -6,8 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"hash/crc32"
-	"strings"
+	"github.com/italolelis/outboxer/lock"
 	"time"
 
 	"github.com/italolelis/outboxer"
@@ -15,8 +14,7 @@ import (
 
 const (
 	// DefaultEventStoreTable is the default table name
-	DefaultEventStoreTable      = "event_store"
-	advisoryLockIDSalt     uint = 1486364155
+	DefaultEventStoreTable = "event_store"
 )
 
 var (
@@ -195,7 +193,7 @@ func (p *MySQL) lock(ctx context.Context) error {
 		return ErrLocked
 	}
 
-	aid, err := generateAdvisoryLockID(p.DatabaseName, p.EventStoreTable)
+	aid, err := lock.Generate(p.DatabaseName, p.EventStoreTable)
 	if err != nil {
 		return err
 	}
@@ -220,7 +218,7 @@ func (p *MySQL) unlock(ctx context.Context) error {
 		return nil
 	}
 
-	aid, err := generateAdvisoryLockID(p.DatabaseName, p.EventStoreTable)
+	aid, err := lock.Generate(p.DatabaseName, p.EventStoreTable)
 	if err != nil {
 		return err
 	}
@@ -265,14 +263,4 @@ CREATE TABLE IF NOT EXISTS %[1]s (
 	}
 
 	return nil
-}
-
-// generateAdvisoryLockID inspired by rails migrations, see https://goo.gl/8o9bCT
-func generateAdvisoryLockID(databaseName string, additionalNames ...string) (string, error) {
-	if len(additionalNames) > 0 {
-		databaseName = strings.Join(append(additionalNames, databaseName), "\x00")
-	}
-	sum := crc32.ChecksumIEEE([]byte(databaseName))
-	sum = sum * uint32(advisoryLockIDSalt)
-	return fmt.Sprintf("%v", sum), nil
 }
