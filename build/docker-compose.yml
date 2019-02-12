@@ -17,3 +17,13 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+
+  mysql:
+    image: mysql:latest
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_DATABASE: "test"
+      MYSQL_ROOT_PASSWORD: "qwerty123"
+      MYSQL_USER: "outboxer"
+      MYSQL_PASSWORD: "qwerty123"
