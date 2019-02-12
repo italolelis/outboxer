@@ -53,7 +53,8 @@ func TestDatastore(t *testing.T) {
 		t.Fatalf("failed to connect to mysql: %s", err)
 	}
 
-	db.SetConnMaxLifetime(time.Second * 10)
+	db.SetMaxIdleConns(0)
+	db.SetConnMaxLifetime(time.Second * 60)
 
 	ds, err := WithInstance(ctx, db)
 	if err != nil {
