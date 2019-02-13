@@ -32,7 +32,6 @@ var (
 type Postgres struct {
 	// Locking and unlocking need to use the same connection
 	conn     *sql.Conn
-	db       *sql.DB
 	isLocked bool
 
 	DatabaseName    string
@@ -47,9 +46,9 @@ func WithInstance(ctx context.Context, db *sql.DB) (*Postgres, error) {
 		return nil, err
 	}
 
-	p := Postgres{conn: conn, db: db}
+	p := Postgres{conn: conn}
 
-	if err := db.QueryRow(`SELECT CURRENT_DATABASE()`).Scan(&p.DatabaseName); err != nil {
+	if err := conn.QueryRowContext(ctx, `SELECT CURRENT_DATABASE()`).Scan(&p.DatabaseName); err != nil {
 		return nil, err
 	}
 
@@ -57,7 +56,7 @@ func WithInstance(ctx context.Context, db *sql.DB) (*Postgres, error) {
 		return nil, ErrNoDatabaseName
 	}
 
-	if err := db.QueryRow(`SELECT CURRENT_SCHEMA()`).Scan(&p.SchemaName); err != nil {
+	if err := conn.QueryRowContext(ctx, `SELECT CURRENT_SCHEMA()`).Scan(&p.SchemaName); err != nil {
 		return nil, err
 	}
 
@@ -78,10 +77,8 @@ func WithInstance(ctx context.Context, db *sql.DB) (*Postgres, error) {
 
 // Close closes the db connection
 func (p *Postgres) Close() error {
-	connErr := p.conn.Close()
-	dbErr := p.db.Close()
-	if connErr != nil || dbErr != nil {
-		return fmt.Errorf("conn: %v, db: %v", connErr, dbErr)
+	if err := p.conn.Close(); err != nil {
+		return fmt.Errorf("conn: %v", err)
 	}
 	return nil
 }
@@ -90,7 +87,7 @@ func (p *Postgres) Close() error {
 func (p *Postgres) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.OutboxMessage, error) {
 	var events []*outboxer.OutboxMessage
 
-	rows, err := p.db.Query(fmt.Sprintf("SELECT * FROM %s WHERE dispatched = false LIMIT %d", p.EventStoreTable, batchSize))
+	rows, err := p.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM %s WHERE dispatched = false LIMIT %d", p.EventStoreTable, batchSize))
 	if err != nil {
 		return events, fmt.Errorf("could not get messages from the store: %s", err)
 	}
@@ -163,7 +160,7 @@ set
 	headers = '{}'
 where id = $1;
 `, p.EventStoreTable)
-	if _, err := p.db.ExecContext(ctx, query, id); err != nil {
+	if _, err := p.conn.ExecContext(ctx, query, id); err != nil {
 		return fmt.Errorf("could set message as dispatched: %s", err)
 	}
 

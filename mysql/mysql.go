@@ -29,7 +29,6 @@ var (
 type MySQL struct {
 	// Locking and unlocking need to use the same connection
 	conn     *sql.Conn
-	db       *sql.DB
 	isLocked bool
 
 	DatabaseName    string
@@ -43,7 +42,11 @@ func WithInstance(ctx context.Context, db *sql.DB) (*MySQL, error) {
 		return nil, err
 	}
 
-	p := MySQL{conn: conn, db: db}
+	p := MySQL{conn: conn}
+
+	if err := conn.PingContext(ctx); err != nil {
+		return nil, fmt.Errorf("could not ping to the MySQL database: %s", err)
+	}
 
 	var databaseName sql.NullString
 	if err := db.QueryRow(`SELECT DATABASE()`).Scan(&databaseName); err != nil {
@@ -70,9 +73,8 @@ func WithInstance(ctx context.Context, db *sql.DB) (*MySQL, error) {
 // Close closes the db connection
 func (p *MySQL) Close() error {
 	connErr := p.conn.Close()
-	dbErr := p.db.Close()
-	if connErr != nil || dbErr != nil {
-		return fmt.Errorf("conn: %v, db: %v", connErr, dbErr)
+	if connErr != nil {
+		return fmt.Errorf("conn: %v", connErr)
 	}
 	return nil
 }
@@ -81,7 +83,7 @@ func (p *MySQL) Close() error {
 func (p *MySQL) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.OutboxMessage, error) {
 	var events []*outboxer.OutboxMessage
 
-	rows, err := p.db.Query(fmt.Sprintf("SELECT * FROM %s WHERE dispatched = false LIMIT %d", p.EventStoreTable, batchSize))
+	rows, err := p.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM %s WHERE dispatched = false LIMIT %d", p.EventStoreTable, batchSize))
 	if err != nil {
 		return events, fmt.Errorf("could not get messages from the store: %s", err)
 	}
@@ -154,7 +156,7 @@ set
 	headers = '{}'
 where id = ?;
 `, p.EventStoreTable)
-	if _, err := p.db.ExecContext(ctx, query, id); err != nil {
+	if _, err := p.conn.ExecContext(ctx, query, id); err != nil {
 		return fmt.Errorf("could set message as dispatched: %s", err)
 	}
 
