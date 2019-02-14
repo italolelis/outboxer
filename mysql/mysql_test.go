@@ -124,6 +124,7 @@ func TestMySQL_AddWithinTx(t *testing.T) {
 
 	mock.ExpectQuery(`SELECT DATABASE()`).
 		WillReturnRows(sqlmock.NewRows([]string{"DATABASE()"}).AddRow("test"))
+	initLockMock(t, mock)
 
 	ds, err := WithInstance(ctx, db)
 	if err != nil {
@@ -151,13 +152,17 @@ func TestMySQL_AddWithinTx(t *testing.T) {
 }
 
 func initDatastoreMock(t *testing.T, mock sqlmock.Sqlmock) {
+	mock.ExpectQuery(`SELECT DATABASE()`).
+		WillReturnRows(sqlmock.NewRows([]string{"DATABASE()"}).AddRow("test"))
+	initLockMock(t, mock)
+}
+
+func initLockMock(t *testing.T, mock sqlmock.Sqlmock) {
 	aid, err := lock.Generate("test", "event_store")
 	if err != nil {
 		t.Fatalf("failed to generate the lock value: %s", err)
 	}
 
-	mock.ExpectQuery(`SELECT DATABASE()`).
-		WillReturnRows(sqlmock.NewRows([]string{"DATABASE()"}).AddRow("test"))
 	mock.ExpectQuery(`SELECT GET_LOCK(.+)`).
 		WithArgs(aid).
 		WillReturnRows(sqlmock.NewRows([]string{"GET_LOCK"}).AddRow(true))
