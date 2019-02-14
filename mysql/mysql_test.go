@@ -14,7 +14,7 @@ import (
 	"github.com/italolelis/outboxer"
 )
 
-func TestDatastore(t *testing.T) {
+func TestMySQL_Datastore(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

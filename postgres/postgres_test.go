@@ -11,7 +11,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func TestDatastore(t *testing.T) {
+func TestPostgres_Datastore(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
