@@ -257,7 +257,7 @@ CREATE TABLE IF NOT EXISTS %[1]s (
 	payload BLOB not null,
 	options json,
 	headers json
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 `, p.EventStoreTable)
 
 	if _, err = p.conn.ExecContext(ctx, query); err != nil {
