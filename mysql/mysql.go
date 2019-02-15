@@ -6,8 +6,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/italolelis/outboxer/lock"
 	"time"
+
+	"github.com/italolelis/outboxer/lock"
 
 	"github.com/italolelis/outboxer"
 )
@@ -171,9 +172,16 @@ func (p *MySQL) Remove(ctx context.Context, dispatchedBefore time.Time, batchSiz
 	}
 
 	q := `
-DELETE FROM %s
-WHERE dispatched = true AND dispatched_at < ?
-LIMIT %d
+DELETE FROM %[1]s
+WHERE ctid IN
+(
+    select ctid
+    from %[1]s
+    where
+        dispatched = true and
+    	dispatched_at < ?
+    limit %d
+)
 `
 
 	query := fmt.Sprintf(q, p.EventStoreTable, batchSize)

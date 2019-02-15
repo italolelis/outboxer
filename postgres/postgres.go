@@ -6,10 +6,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/italolelis/outboxer/lock"
 	"time"
 
 	"github.com/italolelis/outboxer"
+	"github.com/italolelis/outboxer/lock"
 )
 
 const (
@@ -175,11 +175,11 @@ func (p *Postgres) Remove(ctx context.Context, dispatchedBefore time.Time, batch
 	}
 
 	q := `
-DELETE FROM %s
-WHERE ctid in
+DELETE FROM %[1]s
+WHERE ctid IN
 (
     select ctid
-    from %s
+    from %[1]s
     where
         "dispatched" = true and
         "dispatched_at" < $1
@@ -187,7 +187,7 @@ WHERE ctid in
 )
 `
 
-	query := fmt.Sprintf(q, p.EventStoreTable, p.EventStoreTable, batchSize)
+	query := fmt.Sprintf(q, p.EventStoreTable, batchSize)
 	if _, err := tx.ExecContext(ctx, query, dispatchedBefore); err != nil {
 		tx.Rollback()
 		return fmt.Errorf("could not remove messages from the data store: %s", err)

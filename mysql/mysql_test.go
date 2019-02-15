@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/italolelis/outboxer"
 	"github.com/italolelis/outboxer/lock"
 )
@@ -43,7 +43,7 @@ func TestMySQL_AddSuccessfully(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	mock.ExpectBegin()
-	mock.ExpectExec(`DELETE FROM (.+) WHERE (.+) LIMIT 10`).
+	mock.ExpectExec(`DELETE FROM (.+) WHERE ctid IN (.+)`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
