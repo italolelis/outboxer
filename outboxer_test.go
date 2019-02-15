@@ -8,9 +8,7 @@ import (
 	"time"
 
 	"github.com/italolelis/outboxer"
-
 	amqpOut "github.com/italolelis/outboxer/amqp"
-	_ "github.com/lib/pq"
 )
 
 type inMemDS struct {

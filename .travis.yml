@@ -7,10 +7,11 @@ services:
   - docker
 
 env:
-  - GO111MODULE=on
+  - GO111MODULE=on MYSQL_DS_DSN='mysql://outboxer:qwerty123@tcp(localhost)/test' DS_DSN='postgres://outboxer:qwerty123@localhost/test?sslmode=disable' ES_DSN='amqp://localhost/'
 
 before_install:
   - sudo /etc/init.d/postgresql stop
+  - sudo /etc/init.d/mysql stop
 
 install: true
 

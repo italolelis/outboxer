@@ -1,5 +1,5 @@
-// Package postgres is the implementation of the postgres data store.
-package postgres
+// Package mysql is the implementation of the mysql data store.
+package mysql
 
 import (
 	"context"
@@ -8,8 +8,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/italolelis/outboxer"
 	"github.com/italolelis/outboxer/lock"
+
+	"github.com/italolelis/outboxer"
 )
 
 const (
@@ -23,46 +24,41 @@ var (
 
 	// ErrNoDatabaseName is used when the database name is blank
 	ErrNoDatabaseName = errors.New("no database name")
-
-	// ErrNoSchema is used when the schema name is blank
-	ErrNoSchema = errors.New("no schema")
 )
 
-// Postgres is the implementation of the data store
-type Postgres struct {
+// MySQL is the implementation of the data store
+type MySQL struct {
 	// Locking and unlocking need to use the same connection
 	conn     *sql.Conn
 	isLocked bool
 
 	DatabaseName    string
-	SchemaName      string
 	EventStoreTable string
 }
 
-// WithInstance creates a postgres data store with an existing db connection
-func WithInstance(ctx context.Context, db *sql.DB) (*Postgres, error) {
+// WithInstance creates a mysql data store with an existing db connection
+func WithInstance(ctx context.Context, db *sql.DB) (*MySQL, error) {
 	conn, err := db.Conn(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	p := Postgres{conn: conn}
+	p := MySQL{conn: conn}
 
-	if err := conn.QueryRowContext(ctx, `SELECT CURRENT_DATABASE()`).Scan(&p.DatabaseName); err != nil {
+	if err := conn.PingContext(ctx); err != nil {
+		return nil, fmt.Errorf("could not ping to the MySQL database: %s", err)
+	}
+
+	var databaseName sql.NullString
+	if err := db.QueryRow(`SELECT DATABASE()`).Scan(&databaseName); err != nil {
 		return nil, err
 	}
 
-	if len(p.DatabaseName) == 0 {
+	if len(databaseName.String) == 0 {
 		return nil, ErrNoDatabaseName
 	}
 
-	if err := conn.QueryRowContext(ctx, `SELECT CURRENT_SCHEMA()`).Scan(&p.SchemaName); err != nil {
-		return nil, err
-	}
-
-	if len(p.SchemaName) == 0 {
-		return nil, ErrNoSchema
-	}
+	p.DatabaseName = databaseName.String
 
 	if len(p.EventStoreTable) == 0 {
 		p.EventStoreTable = DefaultEventStoreTable
@@ -76,7 +72,7 @@ func WithInstance(ctx context.Context, db *sql.DB) (*Postgres, error) {
 }
 
 // Close closes the db connection
-func (p *Postgres) Close() error {
+func (p *MySQL) Close() error {
 	if err := p.conn.Close(); err != nil {
 		return fmt.Errorf("conn: %v", err)
 	}
@@ -84,7 +80,7 @@ func (p *Postgres) Close() error {
 }
 
 // GetEvents retrieves all the relevant events
-func (p *Postgres) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.OutboxMessage, error) {
+func (p *MySQL) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.OutboxMessage, error) {
 	var events []*outboxer.OutboxMessage
 
 	rows, err := p.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM %s WHERE dispatched = false LIMIT %d", p.EventStoreTable, batchSize))
@@ -105,27 +101,17 @@ func (p *Postgres) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.
 }
 
 // Add adds the message to the data store
-func (p *Postgres) Add(ctx context.Context, evt *outboxer.OutboxMessage) error {
-	tx, err := p.conn.BeginTx(ctx, &sql.TxOptions{})
-	if err != nil {
-		return fmt.Errorf("transaction start failed: %s", err)
-	}
-
-	query := fmt.Sprintf(`INSERT INTO %s (payload, options, headers) VALUES ($1, $2, $3)`, p.EventStoreTable)
-	if _, err := tx.ExecContext(ctx, query, evt.Payload, evt.Options, evt.Headers); err != nil {
-		tx.Rollback()
+func (p *MySQL) Add(ctx context.Context, evt *outboxer.OutboxMessage) error {
+	query := fmt.Sprintf(`INSERT INTO %s (payload, options, headers) VALUES (?, ?, ?)`, p.EventStoreTable)
+	if _, err := p.conn.ExecContext(ctx, query, evt.Payload, evt.Options, evt.Headers); err != nil {
 		return fmt.Errorf("could not insert the message into the data store: %s", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("transaction commit failed: %s", err)
 	}
 
 	return nil
 }
 
 // AddWithinTx creates a transaction and then tries to execute anything within it
-func (p *Postgres) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage, fn func(outboxer.ExecerContext) error) error {
+func (p *MySQL) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage, fn func(outboxer.ExecerContext) error) error {
 	tx, err := p.conn.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("transaction start failed: %s", err)
@@ -136,7 +122,7 @@ func (p *Postgres) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage,
 		return err
 	}
 
-	query := fmt.Sprintf(`INSERT INTO %s (payload, options, headers) VALUES ($1, $2, $3)`, p.EventStoreTable)
+	query := fmt.Sprintf(`INSERT INTO %s (payload, options, headers) VALUES (?, ?, ?)`, p.EventStoreTable)
 	if _, err := tx.ExecContext(ctx, query, evt.Payload, evt.Options, evt.Headers); err != nil {
 		tx.Rollback()
 		return fmt.Errorf("could not insert the message into the data store: %s", err)
@@ -150,7 +136,7 @@ func (p *Postgres) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage,
 }
 
 // SetAsDispatched sets one message as dispatched
-func (p *Postgres) SetAsDispatched(ctx context.Context, id int64) error {
+func (p *MySQL) SetAsDispatched(ctx context.Context, id int64) error {
 	query := fmt.Sprintf(`
 update %s
 set
@@ -158,7 +144,7 @@ set
     dispatched_at = now(),
     options = '{}',
 	headers = '{}'
-where id = $1;
+where id = ?;
 `, p.EventStoreTable)
 	if _, err := p.conn.ExecContext(ctx, query, id); err != nil {
 		return fmt.Errorf("could set message as dispatched: %s", err)
@@ -168,7 +154,7 @@ where id = $1;
 }
 
 // Remove removes old messages from the data store
-func (p *Postgres) Remove(ctx context.Context, dispatchedBefore time.Time, batchSize int32) error {
+func (p *MySQL) Remove(ctx context.Context, dispatchedBefore time.Time, batchSize int32) error {
 	tx, err := p.conn.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("transaction start failed: %s", err)
@@ -181,8 +167,8 @@ WHERE ctid IN
     select ctid
     from %[1]s
     where
-        "dispatched" = true and
-        "dispatched_at" < $1
+        dispatched = true and
+    	dispatched_at < ?
     limit %d
 )
 `
@@ -201,48 +187,51 @@ WHERE ctid IN
 }
 
 // Lock implements explicit locking
-// https://www.postgresql.org/docs/9.6/static/explicit-locking.html#ADVISORY-LOCKS
-func (p *Postgres) lock(ctx context.Context) error {
+func (p *MySQL) lock(ctx context.Context) error {
 	if p.isLocked {
 		return ErrLocked
 	}
 
-	aid, err := lock.Generate(p.DatabaseName, p.SchemaName)
+	aid, err := lock.Generate(p.DatabaseName, p.EventStoreTable)
 	if err != nil {
 		return err
 	}
 
-	// This will either obtain the lock immediately and return true,
-	// or return false if the lock cannot be acquired immediately.
-	query := `SELECT pg_advisory_lock($1)`
-	if _, err := p.conn.ExecContext(ctx, query, aid); err != nil {
+	query := "SELECT GET_LOCK(?, 10)"
+	var success bool
+	if err := p.conn.QueryRowContext(ctx, query, aid).Scan(&success); err != nil {
 		return fmt.Errorf("try lock failed: %s", err)
 	}
 
-	p.isLocked = true
-	return nil
+	if success {
+		p.isLocked = true
+		return nil
+	}
+
+	return ErrLocked
 }
 
 // Unlock is the implementation of the unlock for explicit locking
-func (p *Postgres) unlock(ctx context.Context) error {
+func (p *MySQL) unlock(ctx context.Context) error {
 	if !p.isLocked {
 		return nil
 	}
 
-	aid, err := lock.Generate(p.DatabaseName, p.SchemaName)
+	aid, err := lock.Generate(p.DatabaseName, p.EventStoreTable)
 	if err != nil {
 		return err
 	}
 
-	query := `SELECT pg_advisory_unlock($1)`
+	query := `SELECT RELEASE_LOCK(?)`
 	if _, err := p.conn.ExecContext(ctx, query, aid); err != nil {
 		return err
 	}
+
 	p.isLocked = false
 	return nil
 }
 
-func (p *Postgres) ensureTable(ctx context.Context) (err error) {
+func (p *MySQL) ensureTable(ctx context.Context) (err error) {
 	if err = p.lock(ctx); err != nil {
 		return err
 	}
@@ -259,16 +248,13 @@ func (p *Postgres) ensureTable(ctx context.Context) (err error) {
 
 	query := fmt.Sprintf(`
 CREATE TABLE IF NOT EXISTS %[1]s (
-	id SERIAL not null primary key, 
-	dispatched boolean not null default false, 
-	dispatched_at timestamp,
-	payload bytea not null,
-	options jsonb,
-	headers jsonb
-);
-
-CREATE INDEX IF NOT EXISTS "index_dispatchedAt" ON %[1]s using btree (dispatched_at asc nulls last);
-CREATE INDEX IF NOT EXISTS "index_dispatched" ON %[1]s using btree (dispatched asc nulls last);
+	id BIGINT AUTO_INCREMENT not null primary key, 
+	dispatched BOOL not null default false, 
+	dispatched_at DATETIME,
+	payload BLOB not null,
+	options json,
+	headers json
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 `, p.EventStoreTable)
 
 	if _, err = p.conn.ExecContext(ctx, query); err != nil {
