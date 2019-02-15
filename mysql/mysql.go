@@ -73,9 +73,8 @@ func WithInstance(ctx context.Context, db *sql.DB) (*MySQL, error) {
 
 // Close closes the db connection
 func (p *MySQL) Close() error {
-	connErr := p.conn.Close()
-	if connErr != nil {
-		return fmt.Errorf("conn: %v", connErr)
+	if err := p.conn.Close(); err != nil {
+		return fmt.Errorf("conn: %v", err)
 	}
 	return nil
 }
@@ -103,19 +102,9 @@ func (p *MySQL) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.Out
 
 // Add adds the message to the data store
 func (p *MySQL) Add(ctx context.Context, evt *outboxer.OutboxMessage) error {
-	tx, err := p.conn.BeginTx(ctx, &sql.TxOptions{})
-	if err != nil {
-		return fmt.Errorf("transaction start failed: %s", err)
-	}
-
 	query := fmt.Sprintf(`INSERT INTO %s (payload, options, headers) VALUES (?, ?, ?)`, p.EventStoreTable)
-	if _, err := tx.ExecContext(ctx, query, evt.Payload, evt.Options, evt.Headers); err != nil {
-		tx.Rollback()
+	if _, err := p.conn.ExecContext(ctx, query, evt.Payload, evt.Options, evt.Headers); err != nil {
 		return fmt.Errorf("could not insert the message into the data store: %s", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("transaction commit failed: %s", err)
 	}
 
 	return nil
