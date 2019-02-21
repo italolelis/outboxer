@@ -47,7 +47,7 @@ func testNullTimeScan(t *testing.T) {
 	}
 
 	if err := nt.Scan("wrongValue"); err != nil {
-		t.Fatalf("an error was not expected when scannig a NullTime value: %s", err)
+		t.Fatalf("an error was not expected when scanning a NullTime value: %s", err)
 	}
 }
 
