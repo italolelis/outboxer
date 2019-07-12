@@ -5,7 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/italolelis/outboxer)](https://goreportcard.com/report/github.com/italolelis/outboxer)
 [![GoDoc](https://godoc.org/github.com/italolelis/outboxer?status.svg)](https://godoc.org/github.com/italolelis/outboxer)
 
-Outboxer is a go library that implements the [outbox pattern](http://gistlabs.com/2014/05/the-outbox/).
+Outboxer is a go library that implements the [outbox pattern](http://www.kamilgrzybek.com/design/the-outbox-pattern/).
 
 ## Getting Started
 
