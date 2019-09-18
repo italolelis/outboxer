@@ -1,0 +1,23 @@
+run:
+  deadline: 5m
+  tests: true
+  skip-dirs:
+  - configs
+  - charts
+
+linters:
+  enable-all: true
+  disable:
+  - gochecknoglobals
+
+linters-settings:
+  misspell:
+    locale: US
+
+service:
+  golangci-lint-version: 1.17.x
+
+issues:
+  exclude:
+    - "not declared by package utf8"
+    - "unicode/utf8/utf8.go"
