@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/kinesis"
 	"github.com/italolelis/outboxer"
@@ -24,6 +25,7 @@ func TestKinesis_EventStream(t *testing.T) {
 
 	sess, err := session.NewSession(&aws.Config{
 		CredentialsChainVerboseErrors: aws.Bool(true),
+		Credentials:                   credentials.NewStaticCredentials("foo", "var", ""),
 		Endpoint:                      aws.String(endpoint),
 		Region:                        aws.String("us-east-1"),
 	})
