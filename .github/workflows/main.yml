@@ -1,7 +1,10 @@
-name: Main Workflow
+name: Main
 on: [push, pull_request]
 jobs:
   test:
+    # Job name is Greeting
+    name: Test
+
     runs-on: ubuntu-latest
 
     container:
