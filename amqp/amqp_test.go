@@ -9,31 +9,16 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func TestAMQPEventStream(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		scenario string
-		function func(*testing.T)
-	}{
-		{
-			"send successful message",
-			testSendSuccessfulMessage,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.scenario, func(t *testing.T) {
-			test.function(t)
-		})
-	}
-}
-
-func testSendSuccessfulMessage(t *testing.T) {
+func TestAMQP_EventStream(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	conn, err := amqp.Dial(os.Getenv("ES_DSN"))
+	endpoint := os.Getenv("ES_DSN")
+	if endpoint == "" {
+		endpoint = "amqp://localhost/"
+	}
+
+	conn, err := amqp.Dial(endpoint)
 	if err != nil {
 		t.Fatalf("failed to connect to amqp: %s", err)
 	}
