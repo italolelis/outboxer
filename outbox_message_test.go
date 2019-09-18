@@ -12,14 +12,6 @@ func TestOutboxMessage(t *testing.T) {
 		function func(*testing.T)
 	}{
 		{
-			"check if NullTime Scan works for message",
-			testNullTimeScan,
-		},
-		{
-			"check if NullTime Value works for message",
-			testNullTimeValue,
-		},
-		{
 			"check if DynamicValues Scan works for message",
 			testDynamicValuesScan,
 		},
@@ -30,50 +22,17 @@ func TestOutboxMessage(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(test.scenario, func(t *testing.T) {
 			test.function(t)
 		})
 	}
 }
 
-func testNullTimeScan(t *testing.T) {
-	nt := NullTime{}
-	if err := nt.Scan("03/05/2019"); err != nil {
-		t.Fatalf("failed to scan NullTime value: %s", err)
-	}
-
-	if err := nt.Scan(nil); err != nil {
-		t.Fatalf("failed to scan NullTime with nil value: %s", err)
-	}
-
-	if err := nt.Scan("wrongValue"); err != nil {
-		t.Fatalf("an error was not expected when scanning a NullTime value: %s", err)
-	}
-}
-
-func testNullTimeValue(t *testing.T) {
-	nt := NullTime{Valid: true}
-
-	v, err := nt.Value()
-	if err != nil {
-		t.Fatalf("failed to get driver.Value from NullTime: %s", err)
-	}
-
-	if v == nil {
-		t.Fatalf("driver.Value was expected from NullTime: %s", err)
-	}
-
-	nt.Valid = false
-	v, _ = nt.Value()
-	if v != nil {
-		t.Fatalf("driver.Value is not supposed to be nil: %s", err)
-	}
-}
-
 func testDynamicValuesScan(t *testing.T) {
 	dv := DynamicValues{}
 	if err := dv.Scan([]byte(`{"key": "value"}`)); err != nil {
-		t.Fatalf("failed to scan NullTime value: %s", err)
+		t.Fatalf("failed to scan DynamicValues value: %s", err)
 	}
 
 	if _, ok := dv["key"]; !ok {
