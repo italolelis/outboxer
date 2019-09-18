@@ -25,5 +25,5 @@ tools: tools.golangci-lint
 tools.golangci-lint:
 	@command -v golangci-lint >/dev/null ; if [ $$? -ne 0 ]; then \
 		echo "$(OK_COLOR)==> installing golangci-lint$(NO_COLOR)"; \
-		curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(GOPATH)/bin v1.17.1; \
+		curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.17.1; \
 	fi
