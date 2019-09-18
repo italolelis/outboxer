@@ -6,3 +6,17 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+
+  localstack:
+    image: localstack/localstack
+    ports:
+      - "4568:4568"
+    environment:
+      - SERVICES=kinesis
+      - DEFAULT_REGION=eu-central-1
+      - START_WEB=0
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - "/tmp/localstack:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
