@@ -48,9 +48,9 @@ func TestKinesis_EventStream(t *testing.T) {
 		}
 	}
 
-	if err := kinesisClient.WaitUntilStreamExistsWithContext(ctx, &kinesis.DescribeStreamInput{StreamName: streamName}); err != nil {
-		t.Fatalf("failed to wait for stream creation: %s", err)
-	}
+	// if err := kinesisClient.WaitUntilStreamExistsWithContext(ctx, &kinesis.DescribeStreamInput{StreamName: streamName}); err != nil {
+	// 	t.Fatalf("failed to wait for stream creation: %s", err)
+	// }
 
 	es := New(kinesisClient)
 	if err := es.Send(ctx, &outboxer.OutboxMessage{
