@@ -3,11 +3,13 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    container:
+      image:  go:1.13-alpine
+
     steps:
-    - name: Install Go
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.13.x
+    - name: Install packages
+      run: apk add --update make git
 
     - name: Checkout code
       uses: actions/checkout@v1
