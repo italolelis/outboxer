@@ -29,4 +29,4 @@ jobs:
         COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
       run: |
         go get github.com/mattn/goveralls
-        $GOPATH/bin/goveralls -coverprofile=tests.out -service travis-ci -repotoken $COVERALLS_TOKEN
+        $(go env GOPATH | awk 'BEGIN{FS=":"} {print $1}')/bin/goveralls -coverprofile=tests.out -service travis-ci -repotoken $COVERALLS_TOKEN
