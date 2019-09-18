@@ -4,16 +4,14 @@ jobs:
   test:
     # Job name is Greeting
     name: Test
-
     runs-on: ubuntu-latest
 
-    container:
-      image:  go:1.13-alpine
-
     steps:
-    - name: Install packages
-      run: apk add --update make git
-
+    - name: Setup go
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13.x
+        
     - name: Checkout code
       uses: actions/checkout@v1
 
@@ -31,4 +29,4 @@ jobs:
         COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
       run: |
         go get github.com/mattn/goveralls
-        $GOPATH/bin/goveralls -coverprofile=tests.out -service travis-ci -repotoken $COVERALLS_TOKEN
+        $(go env GOPATH | awk 'BEGIN{FS=":"} {print $1}')/bin/goveralls -coverprofile=tests.out -service travis-ci -repotoken $COVERALLS_TOKEN
