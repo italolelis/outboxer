@@ -46,7 +46,7 @@ func WithInstance(ctx context.Context, db *sql.DB) (*MySQL, error) {
 	p := MySQL{conn: conn}
 
 	if err := conn.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("could not ping to the MySQL database: %s", err)
+		return nil, fmt.Errorf("could not ping to MySQL database: %w", err)
 	}
 
 	var databaseName sql.NullString
@@ -74,7 +74,7 @@ func WithInstance(ctx context.Context, db *sql.DB) (*MySQL, error) {
 // Close closes the db connection
 func (p *MySQL) Close() error {
 	if err := p.conn.Close(); err != nil {
-		return fmt.Errorf("conn: %v", err)
+		return fmt.Errorf("failed to close connection: %w", err)
 	}
 	return nil
 }
@@ -85,14 +85,14 @@ func (p *MySQL) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.Out
 
 	rows, err := p.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM %s WHERE dispatched = false LIMIT %d", p.EventStoreTable, batchSize))
 	if err != nil {
-		return events, fmt.Errorf("could not get messages from the store: %s", err)
+		return events, fmt.Errorf("failed to get messages from store: %w", err)
 	}
 
 	for rows.Next() {
 		var e outboxer.OutboxMessage
 		err = rows.Scan(&e.ID, &e.Dispatched, &e.DispatchedAt, &e.Payload, &e.Options, &e.Headers)
 		if err != nil {
-			return events, fmt.Errorf("could not scan message: %s", err)
+			return events, fmt.Errorf("failed to scan message: %w", err)
 		}
 		events = append(events, &e)
 	}
@@ -104,7 +104,7 @@ func (p *MySQL) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.Out
 func (p *MySQL) Add(ctx context.Context, evt *outboxer.OutboxMessage) error {
 	query := fmt.Sprintf(`INSERT INTO %s (payload, options, headers) VALUES (?, ?, ?)`, p.EventStoreTable)
 	if _, err := p.conn.ExecContext(ctx, query, evt.Payload, evt.Options, evt.Headers); err != nil {
-		return fmt.Errorf("could not insert the message into the data store: %s", err)
+		return fmt.Errorf("failed to insert message into the data store: %w", err)
 	}
 
 	return nil
@@ -114,7 +114,7 @@ func (p *MySQL) Add(ctx context.Context, evt *outboxer.OutboxMessage) error {
 func (p *MySQL) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage, fn func(outboxer.ExecerContext) error) error {
 	tx, err := p.conn.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
-		return fmt.Errorf("transaction start failed: %s", err)
+		return fmt.Errorf("transaction start failed: %w", err)
 	}
 
 	err = fn(tx)
@@ -125,11 +125,11 @@ func (p *MySQL) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage, fn
 	query := fmt.Sprintf(`INSERT INTO %s (payload, options, headers) VALUES (?, ?, ?)`, p.EventStoreTable)
 	if _, err := tx.ExecContext(ctx, query, evt.Payload, evt.Options, evt.Headers); err != nil {
 		tx.Rollback()
-		return fmt.Errorf("could not insert the message into the data store: %s", err)
+		return fmt.Errorf("failed to insert message into the data store: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("transaction commit failed: %s", err)
+		return fmt.Errorf("transaction commit failed: %w", err)
 	}
 
 	return nil
@@ -147,7 +147,7 @@ set
 where id = ?;
 `, p.EventStoreTable)
 	if _, err := p.conn.ExecContext(ctx, query, id); err != nil {
-		return fmt.Errorf("could set message as dispatched: %s", err)
+		return fmt.Errorf("failed to set message as dispatched: %w", err)
 	}
 
 	return nil
@@ -157,7 +157,7 @@ where id = ?;
 func (p *MySQL) Remove(ctx context.Context, dispatchedBefore time.Time, batchSize int32) error {
 	tx, err := p.conn.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
-		return fmt.Errorf("transaction start failed: %s", err)
+		return fmt.Errorf("transaction start failed: %w", err)
 	}
 
 	q := `
@@ -176,11 +176,11 @@ WHERE ctid IN
 	query := fmt.Sprintf(q, p.EventStoreTable, batchSize)
 	if _, err := tx.ExecContext(ctx, query, dispatchedBefore); err != nil {
 		tx.Rollback()
-		return fmt.Errorf("could not remove messages from the data store: %s", err)
+		return fmt.Errorf("failed to remove messages from the data store: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("transaction commit failed: %s", err)
+		return fmt.Errorf("transaction commit failed: %w", err)
 	}
 
 	return nil
@@ -200,7 +200,7 @@ func (p *MySQL) lock(ctx context.Context) error {
 	query := "SELECT GET_LOCK(?, 10)"
 	var success bool
 	if err := p.conn.QueryRowContext(ctx, query, aid).Scan(&success); err != nil {
-		return fmt.Errorf("try lock failed: %s", err)
+		return fmt.Errorf("failed to acquire lock: %w", err)
 	}
 
 	if success {
@@ -241,7 +241,7 @@ func (p *MySQL) ensureTable(ctx context.Context) (err error) {
 			if err == nil {
 				err = e
 			} else {
-				err = fmt.Errorf("could not unlock the table: %s", err)
+				err = fmt.Errorf("failed to unlock table: %w", err)
 			}
 		}
 	}()
