@@ -1,5 +1,6 @@
 # Outboxer
 
+[![Build Status](https://github.com/italolelis/outboxer/workflows/.github/workflows/main.yml/badge.svg)](https://github.com/italolelis/outboxer/actions)
 [![Build Status](https://travis-ci.com/italolelis/outboxer.svg?branch=master)](https://travis-ci.com/italolelis/outboxer)
 [![Coverage Status](https://coveralls.io/repos/github/italolelis/outboxer/badge.svg?branch=master)](https://coveralls.io/github/italolelis/outboxer?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/italolelis/outboxer)](https://goreportcard.com/report/github.com/italolelis/outboxer)
