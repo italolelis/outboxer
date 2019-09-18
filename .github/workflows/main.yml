@@ -6,7 +6,6 @@ jobs:
     name: Test
 
     runs-on: ubuntu-latest
-
     container:
       image:  go:1.13-alpine
 
