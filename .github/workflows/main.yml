@@ -10,9 +10,6 @@ jobs:
       image:  golang:1.13
 
     steps:
-    - name: Install packages
-      run: apk add --update make git
-
     - name: Checkout code
       uses: actions/checkout@v1
 
