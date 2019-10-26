@@ -26,6 +26,7 @@ func (p DynamicValues) Value() (driver.Value, error) {
 	if len(p) == 0 {
 		return nil, nil
 	}
+
 	return json.Marshal(p)
 }
 
@@ -35,8 +36,10 @@ func (p *DynamicValues) Scan(src interface{}) error {
 	if !v.IsValid() || v.IsNil() {
 		return nil
 	}
+
 	if data, ok := src.([]byte); ok {
 		return json.Unmarshal(data, &p)
 	}
+
 	return fmt.Errorf("could not not decode type %T -> %T", src, p)
 }

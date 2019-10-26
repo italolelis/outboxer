@@ -22,6 +22,7 @@ func TestAMQP_EventStream(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to connect to amqp: %s", err)
 	}
+
 	defer conn.Close()
 
 	es := NewAMQP(conn)

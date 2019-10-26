@@ -24,6 +24,7 @@ func (inmem *inMemDS) SetAsDispatched(ctx context.Context, id int64) error {
 		if m.ID == id {
 			m.Dispatched = true
 			m.DispatchedAt.Time = time.Now()
+
 			return nil
 		}
 	}
@@ -56,7 +57,7 @@ type inMemES struct {
 	ok bool
 }
 
-// Send mocks the behaviour of the event store
+// Send mocks the behavior of the event store
 func (inmem *inMemES) Send(context.Context, *outboxer.OutboxMessage) error {
 	if inmem.ok {
 		return nil
@@ -82,7 +83,8 @@ func TestOutboxer_Send(t *testing.T) {
 		t.Fatalf("could not create an outboxer instance: %s", err)
 	}
 
-	t.Log("started to listen for new messages")
+	fmt.Println("started to listen for new messages")
+
 	o.Start(ctx)
 	defer o.Stop()
 
@@ -92,10 +94,10 @@ func TestOutboxer_Send(t *testing.T) {
 		for {
 			select {
 			case err := <-ob.ErrChan():
-				t.Fatalf("could not send message: %s", err)
+				t.Errorf("could not send message: %s", err)
 				return
 			case <-ob.OkChan():
-				t.Log("message received")
+				fmt.Println("message received")
 				done <- struct{}{}
 				return
 			case <-ctx.Done():
@@ -104,7 +106,8 @@ func TestOutboxer_Send(t *testing.T) {
 		}
 	}(o)
 
-	t.Log("sending message...")
+	fmt.Println("sending message...")
+
 	if err = o.Send(ctx, &outboxer.OutboxMessage{
 		Payload: []byte("test payload"),
 		Options: map[string]interface{}{
@@ -116,7 +119,7 @@ func TestOutboxer_Send(t *testing.T) {
 		t.Fatalf("could not send message: %s", err)
 	}
 
-	t.Log("waiting for successfully sent messages...")
+	fmt.Println("waiting for successfully sent messages...")
 	<-done
 }
 
@@ -137,8 +140,9 @@ func TestOutboxer_SendWithinTx(t *testing.T) {
 		t.Fatalf("could not create an outboxer instance: %s", err)
 	}
 
-	t.Log("started to listen for new messages")
+	fmt.Println("started to listen for new messages")
 	o.Start(ctx)
+
 	defer o.Stop()
 
 	done := make(chan struct{})
@@ -147,10 +151,10 @@ func TestOutboxer_SendWithinTx(t *testing.T) {
 		for {
 			select {
 			case err := <-ob.ErrChan():
-				t.Fatalf("could not send message: %s", err)
+				t.Errorf("could not send message: %s", err)
 				return
 			case <-ob.OkChan():
-				t.Log("message received")
+				fmt.Println("message received")
 				done <- struct{}{}
 				return
 			case <-ctx.Done():
@@ -159,7 +163,6 @@ func TestOutboxer_SendWithinTx(t *testing.T) {
 		}
 	}(o)
 
-	t.Log("sending message...")
 	if err = o.SendWithinTx(ctx, &outboxer.OutboxMessage{
 		Payload: []byte("test payload"),
 		Options: map[string]interface{}{
@@ -176,7 +179,7 @@ func TestOutboxer_SendWithinTx(t *testing.T) {
 		t.Fatalf("could not send message within transaction: %s", err)
 	}
 
-	t.Log("waiting for successfully sent messages...")
+	fmt.Println("waiting for successfully sent messages...")
 	<-done
 }
 

@@ -9,15 +9,20 @@ linters:
   enable-all: true
   disable:
   - gochecknoglobals
+  - errcheck
+  - unused
 
 linters-settings:
   misspell:
     locale: US
-
-service:
-  golangci-lint-version: 1.17.x
+  lll:
+    line-length: 140
 
 issues:
-  exclude:
-    - "not declared by package utf8"
-    - "unicode/utf8/utf8.go"
+  exclude-rules:
+    - text: "weak cryptographic primitive"
+      linters:
+        - gosec
+
+service:
+  golangci-lint-version: 1.21.x

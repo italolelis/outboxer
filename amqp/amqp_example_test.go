@@ -19,6 +19,7 @@ func ExampleNewAMQP() {
 		fmt.Printf("failed to connect to amqp: %s", err)
 		return
 	}
+
 	defer conn.Close()
 
 	es := amqpOut.NewAMQP(conn)
