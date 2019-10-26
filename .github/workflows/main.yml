@@ -25,7 +25,7 @@ jobs:
       run: docker-compose -f build/docker-compose.yml up -d
 
     - name: Lint
-      uses: matoous/golangci-lint-action@v1
+      uses: docker://matousdz/golangci-lint-action:v1.0.0
       with:
         config: .golangci.yml
       env:
