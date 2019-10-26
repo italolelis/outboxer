@@ -9,7 +9,6 @@ on:
 
 jobs:
   test:
-    # Job name is Greeting
     name: Test
     runs-on: ubuntu-latest
 
@@ -24,6 +23,13 @@ jobs:
 
     - name: Build the stack
       run: docker-compose -f build/docker-compose.yml up -d
+
+    - name: Lint
+      uses: docker://matoous/golangci-lint-action:v1
+      with:
+        config: .golangci.yml
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Test
       run: make test
