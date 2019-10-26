@@ -24,5 +24,6 @@ func ExamplePostgres() {
 		fmt.Printf("failed to setup the data store: %s", err)
 		return
 	}
-	defer ds.Close()
+
+	ds.Close()
 }

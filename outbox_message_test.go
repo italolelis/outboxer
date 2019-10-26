@@ -66,6 +66,7 @@ func testDynamicValuesValue(t *testing.T) {
 	}
 
 	dv = DynamicValues{}
+
 	v, err = dv.Value()
 	if err != nil {
 		t.Fatalf("failed to get driver.Value from DynamicValues: %s", err)
@@ -74,5 +75,4 @@ func testDynamicValuesValue(t *testing.T) {
 	if v != nil {
 		t.Fatalf("driver.Value is supposed to be nil: %s", err)
 	}
-
 }

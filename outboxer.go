@@ -61,6 +61,7 @@ func New(opts ...Option) (*Outboxer, error) {
 		messageBatchSize: 100,
 		cleanUpBatchSize: 100,
 	}
+
 	for _, opt := range opts {
 		opt(&o)
 	}
@@ -101,6 +102,7 @@ func (o *Outboxer) SendWithinTx(ctx context.Context, evt *OutboxMessage, fn func
 // Starts the cleanup process, that makes sure old messages are removed from the data store.
 func (o *Outboxer) Start(ctx context.Context) {
 	go o.StartDispatcher(ctx)
+
 	go o.StartCleanup(ctx)
 }
 
@@ -108,6 +110,7 @@ func (o *Outboxer) Start(ctx context.Context) {
 // from the data store and sending to the event stream.
 func (o *Outboxer) StartDispatcher(ctx context.Context) {
 	ticker := time.NewTicker(o.checkInterval)
+
 	for {
 		select {
 		case <-ticker.C:
@@ -137,13 +140,13 @@ func (o *Outboxer) StartDispatcher(ctx context.Context) {
 // StartCleanup starts the cleanup process, that makes sure old messages are removed from the data store.
 func (o *Outboxer) StartCleanup(ctx context.Context) {
 	ticker := time.NewTicker(o.cleanUpInterval)
+
 	for {
 		select {
 		case <-ticker.C:
 			if err := o.ds.Remove(ctx, o.cleanUpBefore, o.cleanUpBatchSize); err != nil {
 				o.errChan <- err
 			}
-
 		case <-ctx.Done():
 			return
 		}

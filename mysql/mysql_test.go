@@ -95,6 +95,7 @@ func TestMySQL_GetEventsWithAFailedScan(t *testing.T) {
 	ds, mock := getDatastore(ctx, t)
 	mock.ExpectQuery(`SELECT (.+) FROM (.+) WHERE (.+) LIMIT (.+)`).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
 	if _, err := ds.GetEvents(ctx, 10); err == nil {
 		t.Fatal("an error is exected when retrieving messages")
 	}
@@ -192,6 +193,7 @@ func TestMySQL_RemoveTxFails(t *testing.T) {
 	ds, mock := getDatastore(ctx, t)
 
 	mock.ExpectBegin().WillReturnError(errors.New("failed to begin transaction"))
+
 	if err := ds.Remove(ctx, time.Now(), 10); err == nil {
 		t.Fatal("error was expected")
 	}
@@ -200,6 +202,7 @@ func TestMySQL_RemoveTxFails(t *testing.T) {
 	mock.ExpectExec(`DELETE FROM (.+) WHERE ctid IN (.+)`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit().WillReturnError(errors.New("failed to commit messages"))
+
 	if err := ds.Remove(ctx, time.Now(), 10); err == nil {
 		t.Fatal("error was expected")
 	}
@@ -256,6 +259,7 @@ func TestMySQL_WithInstanceNoDB(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
 
 	mock.ExpectQuery(`SELECT DATABASE()`).
@@ -275,6 +279,7 @@ func TestMySQL_WithInstanceWithEmptyDBName(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
 
 	mock.ExpectQuery(`SELECT DATABASE()`).
@@ -320,6 +325,7 @@ func getDatastore(ctx context.Context, t *testing.T) (*MySQL, sqlmock.Sqlmock) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
 
 	initDatastoreMock(t, mock)

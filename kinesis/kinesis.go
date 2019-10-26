@@ -13,8 +13,6 @@ import (
 )
 
 const (
-	defaultExchangeType = "topic"
-
 	// StreamNameOption is the stream name option
 	StreamNameOption = "stream_name"
 
