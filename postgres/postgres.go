@@ -80,6 +80,7 @@ func (p *Postgres) Close() error {
 	if err := p.conn.Close(); err != nil {
 		return fmt.Errorf("failed to close connection: %w", err)
 	}
+
 	return nil
 }
 
@@ -87,6 +88,7 @@ func (p *Postgres) Close() error {
 func (p *Postgres) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.OutboxMessage, error) {
 	var events []*outboxer.OutboxMessage
 
+	// nolint
 	rows, err := p.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM %s WHERE dispatched = false LIMIT %d", p.EventStoreTable, batchSize))
 	if err != nil {
 		return events, fmt.Errorf("failed to get messages from the store: %w", err)
@@ -94,10 +96,12 @@ func (p *Postgres) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.
 
 	for rows.Next() {
 		var e outboxer.OutboxMessage
+
 		err = rows.Scan(&e.ID, &e.Dispatched, &e.DispatchedAt, &e.Payload, &e.Options, &e.Headers)
 		if err != nil {
 			return events, fmt.Errorf("failed to scan message: %w", err)
 		}
+
 		events = append(events, &e)
 	}
 
@@ -111,9 +115,13 @@ func (p *Postgres) Add(ctx context.Context, evt *outboxer.OutboxMessage) error {
 		return fmt.Errorf("transaction start failed: %w", err)
 	}
 
+	// nolint
 	query := fmt.Sprintf(`INSERT INTO %s (payload, options, headers) VALUES ($1, $2, $3)`, p.EventStoreTable)
 	if _, err := tx.ExecContext(ctx, query, evt.Payload, evt.Options, evt.Headers); err != nil {
-		tx.Rollback()
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+
 		return fmt.Errorf("failed to insert message into the data store: %w", err)
 	}
 
@@ -136,9 +144,13 @@ func (p *Postgres) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage,
 		return err
 	}
 
+	// nolint
 	query := fmt.Sprintf(`INSERT INTO %s (payload, options, headers) VALUES ($1, $2, $3)`, p.EventStoreTable)
 	if _, err := tx.ExecContext(ctx, query, evt.Payload, evt.Options, evt.Headers); err != nil {
-		tx.Rollback()
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+
 		return fmt.Errorf("failed to insert message into the data store: %w", err)
 	}
 
@@ -189,7 +201,10 @@ WHERE ctid IN
 
 	query := fmt.Sprintf(q, p.EventStoreTable, batchSize)
 	if _, err := tx.ExecContext(ctx, query, dispatchedBefore); err != nil {
-		tx.Rollback()
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+
 		return fmt.Errorf("failed to remove messages from the data store: %w", err)
 	}
 
@@ -220,6 +235,7 @@ func (p *Postgres) lock(ctx context.Context) error {
 	}
 
 	p.isLocked = true
+
 	return nil
 }
 
@@ -238,7 +254,9 @@ func (p *Postgres) unlock(ctx context.Context) error {
 	if _, err := p.conn.ExecContext(ctx, query, aid); err != nil {
 		return err
 	}
+
 	p.isLocked = false
+
 	return nil
 }
 
