@@ -17,19 +17,12 @@ jobs:
       uses: actions/setup-go@v1
       with:
         go-version: 1.13.x
-        
+
     - name: Checkout code
       uses: actions/checkout@v1
 
     - name: Build the stack
       run: docker-compose -f build/docker-compose.yml up -d
-
-    - name: Lint
-      uses: docker://matousdz/golangci-lint-action:v1.0.0
-      with:
-        config: .golangci.yml
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Test
       run: make test
