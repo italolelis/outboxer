@@ -11,6 +11,7 @@ import (
 	"github.com/italolelis/outboxer/lock"
 )
 
+// nolint
 func TestPostgres_AddSuccessfully(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -19,6 +20,7 @@ func TestPostgres_AddSuccessfully(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
 
 	initDatastoreMock(t, mock)
@@ -27,6 +29,7 @@ func TestPostgres_AddSuccessfully(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to setup the data store: %s", err)
 	}
+
 	defer ds.Close()
 
 	mock.ExpectBegin()
@@ -82,6 +85,7 @@ func TestPostgres_WithInstanceNoDB(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
 
 	mock.ExpectQuery(`SELECT CURRENT_DATABASE()`).
@@ -101,6 +105,7 @@ func TestPostgres_WithInstanceWithEmptyDBName(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
 
 	mock.ExpectQuery(`SELECT CURRENT_DATABASE()`).
@@ -120,6 +125,7 @@ func TestPostgres_WithInstanceNoSchema(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
 
 	mock.ExpectQuery(`SELECT CURRENT_SCHEMA()`).
@@ -139,6 +145,7 @@ func TestPostgres_WithInstanceWithEmptySchemaName(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
 
 	mock.ExpectQuery(`SELECT CURRENT_SCHEMA()`).
@@ -158,6 +165,7 @@ func TestPostgres_AddWithinTx(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
 
 	initDatastoreMock(t, mock)
@@ -166,6 +174,7 @@ func TestPostgres_AddWithinTx(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to setup the data store: %s", err)
 	}
+
 	defer ds.Close()
 
 	mock.ExpectBegin()

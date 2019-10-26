@@ -13,6 +13,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
+// nolint
 func ExampleNew() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

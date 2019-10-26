@@ -43,7 +43,6 @@ type options struct {
 	exchange     string
 	exchangeType string
 	routingKey   string
-	passive      bool
 	durable      bool
 	autoDelete   bool
 	internal     bool
@@ -61,6 +60,7 @@ func (r *AMQP) Send(ctx context.Context, evt *outboxer.OutboxMessage) error {
 	if err != nil {
 		return err
 	}
+
 	defer ch.Close()
 
 	opts := r.parseOptions(evt.Options)

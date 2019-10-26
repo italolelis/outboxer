@@ -76,6 +76,7 @@ func (p *MySQL) Close() error {
 	if err := p.conn.Close(); err != nil {
 		return fmt.Errorf("failed to close connection: %w", err)
 	}
+
 	return nil
 }
 
@@ -83,6 +84,7 @@ func (p *MySQL) Close() error {
 func (p *MySQL) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.OutboxMessage, error) {
 	var events []*outboxer.OutboxMessage
 
+	// nolint
 	rows, err := p.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM %s WHERE dispatched = false LIMIT %d", p.EventStoreTable, batchSize))
 	if err != nil {
 		return events, fmt.Errorf("failed to get messages from store: %w", err)
@@ -90,10 +92,12 @@ func (p *MySQL) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.Out
 
 	for rows.Next() {
 		var e outboxer.OutboxMessage
+
 		err = rows.Scan(&e.ID, &e.Dispatched, &e.DispatchedAt, &e.Payload, &e.Options, &e.Headers)
 		if err != nil {
 			return events, fmt.Errorf("failed to scan message: %w", err)
 		}
+
 		events = append(events, &e)
 	}
 
@@ -102,6 +106,7 @@ func (p *MySQL) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.Out
 
 // Add adds the message to the data store
 func (p *MySQL) Add(ctx context.Context, evt *outboxer.OutboxMessage) error {
+	// nolint
 	query := fmt.Sprintf(`INSERT INTO %s (payload, options, headers) VALUES (?, ?, ?)`, p.EventStoreTable)
 	if _, err := p.conn.ExecContext(ctx, query, evt.Payload, evt.Options, evt.Headers); err != nil {
 		return fmt.Errorf("failed to insert message into the data store: %w", err)
@@ -122,9 +127,13 @@ func (p *MySQL) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage, fn
 		return err
 	}
 
+	// nolint
 	query := fmt.Sprintf(`INSERT INTO %s (payload, options, headers) VALUES (?, ?, ?)`, p.EventStoreTable)
 	if _, err := tx.ExecContext(ctx, query, evt.Payload, evt.Options, evt.Headers); err != nil {
-		tx.Rollback()
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+
 		return fmt.Errorf("failed to insert message into the data store: %w", err)
 	}
 
@@ -175,7 +184,10 @@ WHERE ctid IN
 
 	query := fmt.Sprintf(q, p.EventStoreTable, batchSize)
 	if _, err := tx.ExecContext(ctx, query, dispatchedBefore); err != nil {
-		tx.Rollback()
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+
 		return fmt.Errorf("failed to remove messages from the data store: %w", err)
 	}
 
@@ -198,6 +210,7 @@ func (p *MySQL) lock(ctx context.Context) error {
 	}
 
 	query := "SELECT GET_LOCK(?, 10)"
+
 	var success bool
 	if err := p.conn.QueryRowContext(ctx, query, aid).Scan(&success); err != nil {
 		return fmt.Errorf("failed to acquire lock: %w", err)
@@ -228,6 +241,7 @@ func (p *MySQL) unlock(ctx context.Context) error {
 	}
 
 	p.isLocked = false
+
 	return nil
 }
 
