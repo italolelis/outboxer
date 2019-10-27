@@ -15,16 +15,21 @@ import (
 func TestSQLServer_WithInstance_must_return_SQLServerDataStore(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
+
 	initDatastoreMock(t, mock)
+
 	ds, err := WithInstance(ctx, db)
 	if err != nil {
 		t.Fatalf("failed to setup the data store: %s", err)
 	}
+
 	defer ds.Close()
 
 	if ds.SchemaName != "test_schema" {
@@ -37,12 +42,16 @@ func TestSQLServer_WithInstance_must_return_SQLServerDataStore(t *testing.T) {
 }
 func TestSQLServer_WithInstance_should_return_error_when_no_db_selected(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
+
 	defer cancel()
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
+
 	mock.ExpectQuery(`SELECT DB_NAME() `).
 		WillReturnRows(sqlmock.NewRows([]string{"DB_NAME()"}).AddRow(""))
 
@@ -54,16 +63,21 @@ func TestSQLServer_WithInstance_should_return_error_when_no_db_selected(t *testi
 
 func TestSQLServer_WithInstance_should_return_error_when_no_schema_selected(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
+
 	defer cancel()
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
+
 	mock.ExpectQuery(`SELECT DB_NAME() `).
 		WillReturnRows(sqlmock.NewRows([]string{"DB_NAME()"}).AddRow("test"))
 	mock.ExpectQuery(`SELECT SCHEMA_NAME()`).
 		WillReturnRows(sqlmock.NewRows([]string{"SCHEMA_NAME()"}).AddRow(""))
+
 	_, err = WithInstance(ctx, db)
 	if err != ErrNoSchema {
 		t.Fatalf("Expected ErrNoSchema to be returned when no schema selected : %s", err)
@@ -72,18 +86,27 @@ func TestSQLServer_WithInstance_should_return_error_when_no_schema_selected(t *t
 func TestSQLServer_should_add_message(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
+
 	initDatastoreMock(t, mock)
+
 	ds, err := WithInstance(ctx, db)
+
+	if err != nil {
+		t.Fatalf("failed to setup the data store: %s", err)
+	}
 
 	defer ds.Close()
 
 	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO [test_schema].[event_store]`)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
+
 	if err := ds.Add(ctx, &outboxer.OutboxMessage{
 		Payload: []byte("test payload"),
 	}); err != nil {
@@ -94,21 +117,30 @@ func TestSQLServer_should_add_message(t *testing.T) {
 func TestSQLServer_should_add_message_with_tx(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
+
 	initDatastoreMock(t, mock)
+
 	ds, err := WithInstance(ctx, db)
+	if err != nil {
+		t.Fatalf("failed to setup the data store: %s", err)
+	}
 
 	defer ds.Close()
+
 	mock.ExpectBegin()
 	mock.ExpectExec(`SELECT (.+) from event_store`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO [test_schema].[event_store]`)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
+
 	fn := func(tx outboxer.ExecerContext) error {
 		_, err := tx.ExecContext(ctx, "SELECT * from event_store")
 		return err
@@ -124,21 +156,30 @@ func TestSQLServer_should_add_message_with_tx(t *testing.T) {
 func TestSQLServer_add_message_with_tx_should_rollback_on_error(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
+
 	initDatastoreMock(t, mock)
+
 	ds, err := WithInstance(ctx, db)
+	if err != nil {
+		t.Fatalf("failed to setup the data store: %s", err)
+	}
 
 	defer ds.Close()
+
 	mock.ExpectBegin()
 	mock.ExpectExec(`SELECT (.+) from event_store`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO [test_schema].[event_store]`)).
 		WillReturnError(errors.New("Failed to insert"))
 	mock.ExpectRollback()
+
 	fn := func(tx outboxer.ExecerContext) error {
 		_, err := tx.ExecContext(ctx, "SELECT * from event_store")
 		return err
@@ -154,13 +195,20 @@ func TestSQLServer_add_message_with_tx_should_rollback_on_error(t *testing.T) {
 func TestSQLServer_should_get_events(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
+
 	initDatastoreMock(t, mock)
+
 	ds, err := WithInstance(ctx, db)
+	if err != nil {
+		t.Fatalf("failed to setup the data store: %s", err)
+	}
 
 	defer ds.Close()
 
@@ -181,13 +229,20 @@ func TestSQLServer_should_get_events(t *testing.T) {
 func TestSQLServer_should_set_as_dispatched(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
+
 	initDatastoreMock(t, mock)
+
 	ds, err := WithInstance(ctx, db)
+	if err != nil {
+		t.Fatalf("failed to setup the data store: %s", err)
+	}
 
 	defer ds.Close()
 
@@ -199,29 +254,36 @@ func TestSQLServer_should_set_as_dispatched(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to set message as dispatched: %s", err)
 	}
-
 }
 
 func TestSQLServer_should_remove_messages(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
+
 	defer db.Close()
+
 	initDatastoreMock(t, mock)
+
 	ds, err := WithInstance(ctx, db)
+	if err != nil {
+		t.Fatalf("failed to setup the data store: %s", err)
+	}
 
 	defer ds.Close()
+
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM [test_schema].[event_store] WHERE id IN`)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
+
 	if err := ds.Remove(ctx, time.Now(), 10); err != nil {
 		t.Fatalf("failed to remove messages: %s", err)
 	}
-
 }
 func initDatastoreMock(t *testing.T, mock sqlmock.Sqlmock) {
 	mock.ExpectQuery(`SELECT DB_NAME() `).
