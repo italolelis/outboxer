@@ -78,11 +78,13 @@ func (s *SQLServer) Close() error {
 	if err := s.conn.Close(); err != nil {
 		return fmt.Errorf("failed to close connection: %w", err)
 	}
+
 	return nil
 }
 
 // Add the message to the data store
 func (s *SQLServer) Add(ctx context.Context, evt *outboxer.OutboxMessage) error {
+	// nolint
 	query := fmt.Sprintf(`INSERT INTO [%s].[%s] (payload, options, headers) VALUES (@p1, @p2, @p3)`, s.SchemaName, s.EventStoreTable)
 	if _, err := s.conn.ExecContext(ctx, query, evt.Payload, checkBinaryParam(evt.Options), checkBinaryParam(evt.Headers)); err != nil {
 		return fmt.Errorf("failed to insert message into the data store: %w", err)
@@ -103,6 +105,7 @@ func (s *SQLServer) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage
 		return err
 	}
 
+	// nolint
 	query := fmt.Sprintf(`INSERT INTO [%s].[%s] (payload, options, headers) VALUES (@p1, @p2, @p3)`, s.SchemaName, s.EventStoreTable)
 
 	if _, err := tx.ExecContext(ctx, query, evt.Payload, checkBinaryParam(evt.Options), checkBinaryParam(evt.Headers)); err != nil {
@@ -123,11 +126,13 @@ func checkBinaryParam(p outboxer.DynamicValues) outboxer.DynamicValues {
 	if p == nil {
 		return map[string]interface{}{}
 	}
+
 	return p
 }
 
 // SetAsDispatched sets one message as dispatched
 func (s *SQLServer) SetAsDispatched(ctx context.Context, id int64) error {
+	// nolint
 	query := fmt.Sprintf(`
 UPDATE [%s].[%s]
 SET
@@ -162,7 +167,7 @@ WHERE id IN
         "dispatched_at" < @p1
 )
 `
-
+	// nolint
 	query := fmt.Sprintf(q, s.SchemaName, s.EventStoreTable, batchSize)
 	if _, err := tx.ExecContext(ctx, query, dispatchedBefore); err != nil {
 		tx.Rollback()
@@ -179,18 +184,22 @@ WHERE id IN
 // GetEvents retrieves all the relevant events
 func (s *SQLServer) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.OutboxMessage, error) {
 	var events []*outboxer.OutboxMessage
+	// nolint
+	rows, err := s.conn.QueryContext(ctx, fmt.Sprintf("SELECT TOP %d * FROM [%s].[%s] WHERE dispatched = 0",
+		batchSize, s.SchemaName, s.EventStoreTable))
 
-	rows, err := s.conn.QueryContext(ctx, fmt.Sprintf("SELECT TOP %d * FROM [%s].[%s] WHERE dispatched = 0", batchSize, s.SchemaName, s.EventStoreTable))
 	if err != nil {
 		return events, fmt.Errorf("failed to get messages from the store: %w", err)
 	}
 
 	for rows.Next() {
 		var e outboxer.OutboxMessage
+
 		err = rows.Scan(&e.ID, &e.Dispatched, &e.DispatchedAt, &e.Payload, &e.Options, &e.Headers)
 		if err != nil {
 			return events, fmt.Errorf("failed to scan message: %w", err)
 		}
+
 		events = append(events, &e)
 	}
 
@@ -218,6 +227,7 @@ func (s *SQLServer) lock(ctx context.Context) error {
 	}
 
 	s.isLocked = true
+
 	return nil
 }
 
@@ -239,7 +249,9 @@ func (s *SQLServer) unlock(ctx context.Context) error {
 	if _, err := s.conn.ExecContext(ctx, query, aid); err != nil {
 		return err
 	}
+
 	s.isLocked = false
+
 	return nil
 }
 
@@ -257,7 +269,7 @@ func (s *SQLServer) ensureTable(ctx context.Context) (err error) {
 			}
 		}
 	}()
-
+	// nolint
 	query := fmt.Sprintf(
 		`IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='%[2]s' and xtype='U') CREATE TABLE %[1]s.%[2]s (
 	id int IDENTITY(1,1) NOT NULL PRIMARY KEY,
