@@ -54,6 +54,16 @@ Unsure where to begin contributing to Outboxer? You can start by looking through
 
 Both issue lists are sorted by total number of comments. While not perfect, number of comments is a reasonable proxy for impact a given change will have.
 
+### Local Workspace Setup
+
+For local development use the `docker` containers.
+
+Run `docker-compose up -d` from `build` directory to bring up `rabbitmq` and `localstack`.
+
+RabbitMQ management portal will be available at `http://localhost:15672/`.
+
+A local `Kinesis` setup using `localstack` will be available at `http://localhost:4568`.
+
 ### Pull Requests
 
 * Include screenshots and animated GIFs in your pull request whenever possible.
