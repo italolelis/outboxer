@@ -27,6 +27,7 @@ go get github.com/italolelis/outboxer
 Let's setup a simple example where you are using `RabbitMQ` and `Postgres` as your outbox pattern components:
 
 ```go
+
 ctx, cancel := context.WithCancel(context.Background())
 defer cancel()
 

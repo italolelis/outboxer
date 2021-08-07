@@ -15,6 +15,9 @@ lint: tools.golangci-lint
 	@echo "$(OK_COLOR)==> checking code style with 'golangci-lint' tool$(NO_COLOR)"
 	@./bin/golangci-lint run
 
+generate:
+	@go generate ./...
+
 #---------------
 #-- tools
 #---------------
