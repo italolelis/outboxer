@@ -12,7 +12,7 @@ import (
 var (
 	errKafkaOptionType      = errors.New("wrong type for kafka option")
 	errKafkaOptionMandatory = errors.New("option is mandatory")
-	optionTypeErrFmt        = "%w: %s should be %v"
+	optionTypeErrFmt        = "%w: %s should be %T but got %T"
 )
 
 type dispatcher interface {

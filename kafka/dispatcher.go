@@ -82,7 +82,7 @@ func buildSaramaProducerMessage(message outboxer.OutboxMessage) (sarama.Producer
 	producerMsg.Topic, ok = topic.(string)
 
 	if !ok || producerMsg.Topic == "" {
-		return producerMsg, fmt.Errorf(optionTypeErrFmt, errKafkaOptionType, Topic, "str")
+		return producerMsg, fmt.Errorf(optionTypeErrFmt, errKafkaOptionType, Topic, "str", topic)
 	}
 
 	if data, ok := opts[MetaData]; ok {
@@ -91,7 +91,7 @@ func buildSaramaProducerMessage(message outboxer.OutboxMessage) (sarama.Producer
 
 	if data, ok := opts[Partition]; ok {
 		if producerMsg.Partition, ok = data.(int32); !ok {
-			return producerMsg, fmt.Errorf(optionTypeErrFmt, errKafkaOptionType, Partition, int32(1))
+			return producerMsg, fmt.Errorf(optionTypeErrFmt, errKafkaOptionType, Partition, int32(1), data)
 		}
 	} else {
 		producerMsg.Key = sarama.StringEncoder(strconv.FormatInt(message.ID, 10))
@@ -100,9 +100,14 @@ func buildSaramaProducerMessage(message outboxer.OutboxMessage) (sarama.Producer
 	i := 0
 
 	for key, val := range message.Headers {
-		v, ok := val.([]byte)
-		if !ok {
-			return producerMsg, fmt.Errorf(optionTypeErrFmt, errKafkaOptionType, "Headers", map[string][]byte{})
+		var v []byte
+		switch val.(type) {
+		case []byte:
+			v = val.([]byte)
+		case string:
+			v = []byte(val.(string))
+		default:
+			return producerMsg, fmt.Errorf(optionTypeErrFmt, errKafkaOptionType, "Headers", map[string][]byte{}, val)
 		}
 
 		producerMsg.Headers[i] = sarama.RecordHeader{

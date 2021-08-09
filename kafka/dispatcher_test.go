@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"strconv"
 	"testing"
@@ -28,6 +27,7 @@ func TestSyncKafka_buildProducerMessage(t *testing.T) {
 		want    sarama.ProducerMessage
 		wantErr bool
 		ErrType error
+		ErrVal  string
 	}{
 		{
 			name: "topic must be specified and should be non empty",
@@ -58,16 +58,29 @@ func TestSyncKafka_buildProducerMessage(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "header values should be assigned correctly",
+			name: "if wrong partition type then error should be raised",
 			args: struct{ msg outboxer.OutboxMessage }{msg: outboxer.OutboxMessage{
-				ID:      1,
 				Payload: []byte(testPayload),
 				Options: outboxer.DynamicValues{
-					Partition: int32(1),
+					Partition: "abhi",
 					Topic:     testTopic,
+				},
+			}},
+			want:    sarama.ProducerMessage{},
+			wantErr: true,
+			ErrType: errKafkaOptionType,
+		},
+		{
+			name: "header values should be assigned correctly",
+			args: struct{ msg outboxer.OutboxMessage }{msg: outboxer.OutboxMessage{
+				Payload: []byte(testPayload),
+				Options: outboxer.DynamicValues{
+					Topic:     testTopic,
+					Partition: int32(1),
 				},
 				Headers: map[string]interface{}{
 					"key1": []byte("val1"),
+					"key2": "val2",
 				},
 			}},
 			want: sarama.ProducerMessage{
@@ -79,9 +92,30 @@ func TestSyncKafka_buildProducerMessage(t *testing.T) {
 						Key:   []byte("key1"),
 						Value: []byte("val1"),
 					},
+					{
+						Key:   []byte("key2"),
+						Value: []byte("val2"),
+					},
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "wrong header values should give error",
+			args: struct{ msg outboxer.OutboxMessage }{msg: outboxer.OutboxMessage{
+				ID:      1,
+				Payload: []byte(testPayload),
+				Options: outboxer.DynamicValues{
+					Topic: testTopic,
+				},
+				Headers: map[string]interface{}{
+					"key1": int64(100),
+				},
+			}},
+			want:    sarama.ProducerMessage{},
+			wantErr: true,
+			ErrType: errKafkaOptionType,
+			ErrVal:  "wrong type for kafka option: Headers should be map[string][]uint8 but got int64",
 		},
 		{
 			name: "if partition not specified then ID should be used as key",
@@ -115,10 +149,15 @@ func TestSyncKafka_buildProducerMessage(t *testing.T) {
 
 			if tt.wantErr && !errors.Is(err, tt.ErrType) {
 				t.Errorf("buildSaramaProducerMessage() error = %v, want %v", err, tt.ErrType)
+				return
+			}
+
+			if err != nil && tt.ErrVal != "" && tt.ErrVal != err.Error() {
+				t.Errorf("buildSaramaProducerMessage() error = %v, want %v", err.Error(), tt.ErrVal)
+				return
 			}
 
 			if tt.wantErr {
-				fmt.Println(err)
 				return
 			}
 
