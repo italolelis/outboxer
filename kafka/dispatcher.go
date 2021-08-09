@@ -90,7 +90,12 @@ func buildSaramaProducerMessage(message outboxer.OutboxMessage) (sarama.Producer
 	}
 
 	if data, ok := opts[Partition]; ok {
-		if producerMsg.Partition, ok = data.(int32); !ok {
+		switch data.(type) {
+		case float64:
+			producerMsg.Partition = int32(data.(float64))
+		case int32:
+			producerMsg.Partition = data.(int32)
+		default:
 			return producerMsg, fmt.Errorf(optionTypeErrFmt, errKafkaOptionType, Partition, int32(1), data)
 		}
 	} else {
