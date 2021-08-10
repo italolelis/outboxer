@@ -10,7 +10,3 @@ all: test
 test:
 	@echo "$(OK_COLOR)==> Running tests$(NO_COLOR)"
 	@go test -v -cover -covermode=atomic -coverprofile=tests.out ./...
-
-lint: tools.golangci-lint
-	@echo "$(OK_COLOR)==> checking code style with 'golangci-lint' tool$(NO_COLOR)"
-	@./bin/golangci-lint run
