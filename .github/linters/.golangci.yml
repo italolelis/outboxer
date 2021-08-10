@@ -23,6 +23,3 @@ issues:
     - text: "weak cryptographic primitive"
       linters:
         - gosec
-
-service:
-  golangci-lint-version: 1.21.x
