@@ -7,26 +7,9 @@ SERVICE_NAME=dna-srv
 .PHONY: all test lint
 all: test
 
-test: lint
+test:
 	@echo "$(OK_COLOR)==> Running tests$(NO_COLOR)"
 	@go test -v -cover -covermode=atomic -coverprofile=tests.out ./...
 
-lint: tools.golangci-lint
-	@echo "$(OK_COLOR)==> checking code style with 'golangci-lint' tool$(NO_COLOR)"
-	@./bin/golangci-lint run
-
 generate:
 	@go generate ./...
-
-#---------------
-#-- tools
-#---------------
-
-.PHONY: tools tools.golangci-lint
-tools: tools.golangci-lint
-
-tools.golangci-lint:
-	@command -v ./bin/golangci-lint >/dev/null ; if [ $$? -ne 0 ]; then \
-		echo "$(OK_COLOR)==> installing golangci-lint$(NO_COLOR)"; \
-		curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.21.0; \
-	fi
