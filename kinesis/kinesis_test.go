@@ -20,7 +20,7 @@ func TestKinesis_EventStream(t *testing.T) {
 
 	endpoint := os.Getenv("KINESIS_ENDPOINT")
 	if endpoint == "" {
-		endpoint = "http://localhost:4568"
+		endpoint = "http://localhost:4566"
 	}
 
 	sess, err := session.NewSession(&aws.Config{
