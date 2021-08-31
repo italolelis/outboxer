@@ -11,7 +11,7 @@ to this document in a pull request.
 
 This project adheres to the Contributor Covenant [code of conduct](CODE_OF_CONDUCT.md).
 By participating, you are expected to uphold this code.
-Please report unacceptable behavior to [italolelis@gmail.com](mailto:italolelis@gmail.com).
+Please report unacceptable behavior to [italolelis@gmail.com](mailto:me@italovietro.com).
 
 We accept contributions via Pull Requests on [Github](https://github.com/italolelis/outboxer).
 
@@ -20,21 +20,20 @@ We accept contributions via Pull Requests on [Github](https://github.com/italole
 ### Reporting Bugs
 
 This section guides you through submitting a bug report for Outboxer. Following these guidelines helps maintainers 
-and the community understand your report :pencil:, reproduce the behavior :computer: :computer:, and find related 
+and the community understand your report :pencil: reproduce the behavior :computer: :computer: and find related 
 reports :mag_right:.
 
-Before creating bug reports, please check if the bug was already reported before as you might find out that you don't 
-need to create one. When you are creating a bug report, please [include as many details as possible](#how-do-i-submit-a-good-bug-report). 
+Before creating bug reports, please check if the bug was already reported before as you might find out that you don't need to create one. When you are creating a bug report, please [include as many details as possible](#how-do-i-submit-a-good-bug-report). 
 
 #### How Do I Submit A (Good) Bug Report?
 
-Bugs are tracked as [GitHub issues](https://guides.github.com/features/issues/). Create an issue on provide the following information.
+Bugs are tracked as [GitHub issues](https://guides.github.com/features/issues/). Create an issue providing the following information.
 
 Explain the problem and include additional details to help maintainers reproduce the problem:
 
 * **Use a clear and descriptive title** for the issue to identify the problem.
 * **Describe the exact steps which reproduce the problem** in as many details as possible. For example, start by explaining how you started Outboxer, 
-e.g. which command exactly you used in the terminal. When listing steps, **don't just say what you did, but explain how you did it**.
+e.g. which command exactly you used in the terminal. When listing steps, **don't just say what you did but explain how you did it**.
 * **Provide specific examples to demonstrate the steps**. Include links to files or GitHub projects, or copy/pasteable snippets, which you use in those examples. 
 If you're providing snippets in the issue, use [Markdown code blocks](https://help.github.com/articles/markdown-basics/#multiple-lines).
 * **Describe the behavior you observed after following the steps** and point out what exactly is the problem with that behavior.
