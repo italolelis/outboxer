@@ -2,15 +2,14 @@ version: '3'
 
 services:
   rabbit:
-    image: rabbitmq:3.6-management-alpine
+    image: rabbitmq:3.8-alpine
     ports:
       - "5672:5672"
-      - "15672:15672"
 
   localstack:
     image: localstack/localstack
     ports:
-      - "4568:4568"
+      - "4566:4566"
     environment:
       - SERVICES=kinesis
       - DEFAULT_REGION=eu-central-1
