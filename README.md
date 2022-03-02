@@ -104,6 +104,7 @@ Outboxer comes with a few implementations of Data Stores and Event Streams.
 - [SQLServer DataStore](storage/sqlserver/)
 - [AMQP EventStream](amqp/)
 - [Kinesis EventStream](kinesis/)
+- [SQS EventStream](sqs/)
 
 ## Contributing
 

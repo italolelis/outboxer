@@ -25,8 +25,8 @@ const (
 	MessageDedupIdOption = "message_dedup_id"
 )
 
-// Sqs is the wrapper for the Sqs library
-type Sqs struct {
+// SQS is the wrapper for the SQS library
+type SQS struct {
 	conn sqsiface.SQSAPI
 }
 
@@ -37,13 +37,13 @@ type options struct {
 	msgDedupId   *string
 }
 
-// New creates a new instance of Sqs
-func New(conn sqsiface.SQSAPI) *Sqs {
-	return &Sqs{conn: conn}
+// New creates a new instance of SQS
+func New(conn sqsiface.SQSAPI) *SQS {
+	return &SQS{conn: conn}
 }
 
 // Send sends the message to the event stream
-func (r *Sqs) Send(ctx context.Context, evt *outboxer.OutboxMessage) error {
+func (r *SQS) Send(ctx context.Context, evt *outboxer.OutboxMessage) error {
 	opts := r.parseOptions(evt.Options)
 
 	input := &sqs.SendMessageInput{
@@ -67,7 +67,7 @@ func (r *Sqs) Send(ctx context.Context, evt *outboxer.OutboxMessage) error {
 	return nil
 }
 
-func (r *Sqs) parseOptions(opts outboxer.DynamicValues) *options {
+func (r *SQS) parseOptions(opts outboxer.DynamicValues) *options {
 	opt := options{}
 
 	if data, ok := opts[QueueNameOption]; ok {
@@ -89,7 +89,7 @@ func (r *Sqs) parseOptions(opts outboxer.DynamicValues) *options {
 	return &opt
 }
 
-func (r *Sqs) parseHeaders(headers outboxer.DynamicValues) (response map[string]*sqs.MessageAttributeValue) {
+func (r *SQS) parseHeaders(headers outboxer.DynamicValues) (response map[string]*sqs.MessageAttributeValue) {
 	if len(headers) == 0 {
 		return
 	}
