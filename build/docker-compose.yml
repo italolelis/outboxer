@@ -6,12 +6,21 @@ services:
     ports:
       - "5672:5672"
 
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: admin
+      POSTGRES_DB: outboxer
+    ports:
+      - '5432:5432'
+
   localstack:
     image: localstack/localstack
     ports:
       - "4566:4566"
     environment:
-      - SERVICES=kinesis
+      - SERVICES=kinesis,sqs
       - DEFAULT_REGION=eu-central-1
       - START_WEB=0
       - DOCKER_HOST=unix:///var/run/docker.sock
