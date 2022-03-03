@@ -29,7 +29,6 @@ jobs:
           VALIDATE_MD: true
           # VALIDATE_GO: true # This is not currently reliable
           VALIDATE_GITHUB_ACTIONS: true
-          VALIDATE_DOCKERFILE_HADOLINT: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   golangci:
