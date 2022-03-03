@@ -12,22 +12,22 @@ import (
 )
 
 const (
-	// DefaultEventStoreTable is the default table name
+	// DefaultEventStoreTable is the default table name.
 	DefaultEventStoreTable = "event_store"
 )
 
 var (
-	// ErrLocked is used when we can't acquire an explicit lock
+	// ErrLocked is used when we can't acquire an explicit lock.
 	ErrLocked = errors.New("can't acquire lock")
 
-	// ErrNoDatabaseName is used when the database name is blank
+	// ErrNoDatabaseName is used when the database name is blank.
 	ErrNoDatabaseName = errors.New("no database name")
 
-	// ErrNoSchema is used when the schema name is blank
+	// ErrNoSchema is used when the schema name is blank.
 	ErrNoSchema = errors.New("no schema")
 )
 
-// SQLServer implementation of the data store
+// SQLServer implementation of the data store.
 type SQLServer struct {
 	conn     *sql.Conn
 	isLocked bool
@@ -37,7 +37,7 @@ type SQLServer struct {
 	EventStoreTable string
 }
 
-// WithInstance creates a SQLServer data store with an existing db connection
+// WithInstance creates a SQLServer data store with an existing db connection.
 func WithInstance(ctx context.Context, db *sql.DB) (*SQLServer, error) {
 	conn, err := db.Conn(ctx)
 	if err != nil {
@@ -73,7 +73,7 @@ func WithInstance(ctx context.Context, db *sql.DB) (*SQLServer, error) {
 	return &s, nil
 }
 
-// Close closes the db connection
+// Close closes the db connection.
 func (s *SQLServer) Close() error {
 	if err := s.conn.Close(); err != nil {
 		return fmt.Errorf("failed to close connection: %w", err)
@@ -82,7 +82,7 @@ func (s *SQLServer) Close() error {
 	return nil
 }
 
-// Add the message to the data store
+// Add the message to the data store.
 func (s *SQLServer) Add(ctx context.Context, evt *outboxer.OutboxMessage) error {
 	// nolint
 	query := fmt.Sprintf(`INSERT INTO [%s].[%s] (payload, options, headers) VALUES (@p1, @p2, @p3)`, s.SchemaName, s.EventStoreTable)
@@ -93,7 +93,7 @@ func (s *SQLServer) Add(ctx context.Context, evt *outboxer.OutboxMessage) error 
 	return nil
 }
 
-// AddWithinTx creates a transaction and then tries to execute anything within it
+// AddWithinTx creates a transaction and then tries to execute anything within it.
 func (s *SQLServer) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage, fn func(outboxer.ExecerContext) error) error {
 	tx, err := s.conn.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
@@ -130,7 +130,7 @@ func checkBinaryParam(p outboxer.DynamicValues) outboxer.DynamicValues {
 	return p
 }
 
-// SetAsDispatched sets one message as dispatched
+// SetAsDispatched sets one message as dispatched.
 func (s *SQLServer) SetAsDispatched(ctx context.Context, id int64) error {
 	// nolint
 	query := fmt.Sprintf(`
@@ -149,7 +149,7 @@ WHERE id = @p1;
 	return nil
 }
 
-// Remove removes old messages from the data store
+// Remove removes old messages from the data store.
 func (s *SQLServer) Remove(ctx context.Context, dispatchedBefore time.Time, batchSize int32) error {
 	tx, err := s.conn.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
@@ -181,7 +181,7 @@ WHERE id IN
 	return nil
 }
 
-// GetEvents retrieves all the relevant events
+// GetEvents retrieves all the relevant events.
 func (s *SQLServer) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.OutboxMessage, error) {
 	var events []*outboxer.OutboxMessage
 	// nolint
@@ -205,7 +205,7 @@ func (s *SQLServer) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer
 	return events, nil
 }
 
-// Lock implements explicit locking
+// Lock implements explicit locking.
 func (s *SQLServer) lock(ctx context.Context) error {
 	if s.isLocked {
 		return ErrLocked
@@ -230,7 +230,7 @@ func (s *SQLServer) lock(ctx context.Context) error {
 	return nil
 }
 
-// Unlock is the implementation of the unlock for explicit locking
+// Unlock is the implementation of the unlock for explicit locking.
 func (s *SQLServer) unlock(ctx context.Context) error {
 	if !s.isLocked {
 		return nil
