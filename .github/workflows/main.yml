@@ -1,8 +1,7 @@
 name: Master
 on:
-  push:
-    branches:
-      - master
+  pull_request: {}
+  push: { branches: [main, master] }
 
 jobs:
   test:
