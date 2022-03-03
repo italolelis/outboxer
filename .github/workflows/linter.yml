@@ -42,8 +42,8 @@ jobs:
         with:
           fetch-depth: 0
 
-        - name: golangci-lint
-          uses: golangci/golangci-lint-action@v2
-          with:
-            version: v1.29
-            args: -c .github/linters/.golangci.yml
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.29
+          args: -c .github/linters/.golangci.yml
