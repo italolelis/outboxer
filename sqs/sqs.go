@@ -37,6 +37,8 @@ type options struct {
 	msgDedupId   *string
 }
 
+type sqsOption func(*options)
+
 // New creates a new instance of SQS
 func New(conn sqsiface.SQSAPI) *SQS {
 	return &SQS{conn: conn}
@@ -44,7 +46,12 @@ func New(conn sqsiface.SQSAPI) *SQS {
 
 // Send sends the message to the event stream
 func (r *SQS) Send(ctx context.Context, evt *outboxer.OutboxMessage) error {
-	opts := r.parseOptions(evt.Options)
+	opts := newOptions(
+		withQueueName(evt.Options),
+		withDelaySeconds(evt.Options),
+		withGroupID(evt.Options),
+		withDedupID(evt.Options),
+	)
 
 	input := &sqs.SendMessageInput{
 		QueueUrl:               opts.queueName,
@@ -67,26 +74,61 @@ func (r *SQS) Send(ctx context.Context, evt *outboxer.OutboxMessage) error {
 	return nil
 }
 
-func (r *SQS) parseOptions(opts outboxer.DynamicValues) *options {
-	opt := options{}
+func newOptions(opts ...sqsOption) *options {
+	opt := &options{
+		delaySeconds: nil,
+		msgDedupId:   nil,
+	}
 
+	for _, option := range opts {
+		if option == nil {
+			continue
+		}
+
+		option(opt)
+	}
+
+	return opt
+}
+
+func withQueueName(opts outboxer.DynamicValues) sqsOption {
 	if data, ok := opts[QueueNameOption]; ok {
-		opt.queueName = aws.String(data.(string))
+		return func(opt *options) {
+			opt.queueName = aws.String(data.(string))
+		}
 	}
 
+	return nil
+}
+
+func withDelaySeconds(opts outboxer.DynamicValues) sqsOption {
 	if data, ok := opts[DelaySecondsOption]; ok {
-		opt.delaySeconds = aws.Int64(data.(int64))
+		return func(opt *options) {
+			opt.delaySeconds = aws.Int64(data.(int64))
+		}
 	}
 
+	return nil
+}
+
+func withGroupID(opts outboxer.DynamicValues) sqsOption {
 	if data, ok := opts[MessageGroupIdOption]; ok {
-		opt.msgGroupId = aws.String(data.(string))
+		return func(opt *options) {
+			opt.msgGroupId = aws.String(data.(string))
+		}
 	}
 
+	return nil
+}
+
+func withDedupID(opts outboxer.DynamicValues) sqsOption {
 	if data, ok := opts[MessageDedupIdOption]; ok {
-		opt.msgDedupId = aws.String(data.(string))
+		return func(opt *options) {
+			opt.msgDedupId = aws.String(data.(string))
+		}
 	}
 
-	return &opt
+	return nil
 }
 
 func (r *SQS) parseHeaders(headers outboxer.DynamicValues) (response map[string]*sqs.MessageAttributeValue) {
