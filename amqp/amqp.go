@@ -12,29 +12,29 @@ import (
 const (
 	defaultExchangeType = "topic"
 
-	// ExchangeNameOption is the exchange name option
+	// ExchangeNameOption is the exchange name option.
 	ExchangeNameOption = "exchange.name"
 
-	// ExchangeTypeOption is the exchange type option
+	// ExchangeTypeOption is the exchange type option.
 	ExchangeTypeOption = "exchange.type"
 
-	// ExchangeDurable is the exchange durable option
+	// ExchangeDurable is the exchange durable option.
 	ExchangeDurable = "exchange.durable"
 
-	// ExchangeAutoDelete is the exchange auto delete option
+	// ExchangeAutoDelete is the exchange auto delete option.
 	ExchangeAutoDelete = "exchange.auto_delete"
 
-	// ExchangeInternal is the exchange internal option
+	// ExchangeInternal is the exchange internal option.
 	ExchangeInternal = "exchange.internal"
 
-	// ExchangeNoWait is the exchange no wait option
+	// ExchangeNoWait is the exchange no wait option.
 	ExchangeNoWait = "exchange.no_wait"
 
-	// RoutingKeyOption is the routing key option
+	// RoutingKeyOption is the routing key option.
 	RoutingKeyOption = "routing_key"
 )
 
-// AMQP is the wrapper for the AMQP library
+// AMQP is the wrapper for the AMQP library.
 type AMQP struct {
 	conn *amqp.Connection
 }
@@ -49,12 +49,12 @@ type options struct {
 	noWait       bool
 }
 
-// NewAMQP creates a new instance of AMQP
+// NewAMQP creates a new instance of AMQP.
 func NewAMQP(conn *amqp.Connection) *AMQP {
 	return &AMQP{conn: conn}
 }
 
-// Send sends the message to the event stream
+// Send sends the message to the event stream.
 func (r *AMQP) Send(ctx context.Context, evt *outboxer.OutboxMessage) error {
 	ch, err := r.conn.Channel()
 	if err != nil {
@@ -73,7 +73,7 @@ func (r *AMQP) Send(ctx context.Context, evt *outboxer.OutboxMessage) error {
 		opts.noWait,       // noWait
 		nil,               // arguments
 	); err != nil {
-		return fmt.Errorf("exchange declare: %s", err)
+		return fmt.Errorf("exchange declare: %w", err)
 	}
 
 	if err = ch.Publish(
@@ -89,7 +89,7 @@ func (r *AMQP) Send(ctx context.Context, evt *outboxer.OutboxMessage) error {
 			Headers:      amqp.Table(evt.Headers),
 		},
 	); err != nil {
-		return fmt.Errorf("exchange publish: %s", err)
+		return fmt.Errorf("exchange publish: %w", err)
 	}
 
 	return nil
