@@ -1,7 +1,7 @@
 # Outboxer
 
-[![Build Status](https://github.com/italolelis/outboxer/workflows/Master/badge.svg)](https://github.com/italolelis/outboxer/actions)
-[![Coverage Status](https://coveralls.io/repos/github/italolelis/outboxer/badge.svg?branch=master)](https://coveralls.io/github/italolelis/outboxer?branch=master)
+[![Build Status](https://github.com/italolelis/outboxer/workflows/Main/badge.svg)](https://github.com/italolelis/outboxer/actions)
+[![codecov](https://codecov.io/gh/italolelis/outboxer/branch/master/graph/badge.svg?token=8G6G1B3QE6)](https://codecov.io/gh/italolelis/outboxer)
 [![Go Report Card](https://goreportcard.com/badge/github.com/italolelis/outboxer)](https://goreportcard.com/report/github.com/italolelis/outboxer)
 [![GoDoc](https://godoc.org/github.com/italolelis/outboxer?status.svg)](https://godoc.org/github.com/italolelis/outboxer)
 
@@ -99,9 +99,9 @@ for {
 
 Outboxer comes with a few implementations of Data Stores and Event Streams.
 
-- [Postgres DataStore](postgres/)
-- [MySQL DataStore](mysql/)
-- [SQLServer DataStore](sqlserver/)
+- [Postgres DataStore](storage/postgres/)
+- [MySQL DataStore](storage/mysql/)
+- [SQLServer DataStore](storage/sqlserver/)
 - [AMQP EventStream](amqp/)
 - [Kinesis EventStream](kinesis/)
 
