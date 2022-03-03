@@ -1,6 +1,6 @@
 name: Main
 on:
-  pull_request: {}
+  pull_request: { branches: ["*"] }
   push: { branches: [main, master] }
 
 jobs:
