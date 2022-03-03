@@ -10,3 +10,7 @@ all: test
 test:
 	@echo "$(OK_COLOR)==> Running tests$(NO_COLOR)"
 	@go test -v -cover -covermode=atomic -coverprofile=tests.out ./...
+
+setup:
+	@echo "$(OK_COLOR)==> Setting up deps$(NO_COLOR)"
+	@awslocal kinesis create-stream --stream-name test --shard-count 1
