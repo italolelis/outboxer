@@ -5,6 +5,10 @@ on:
   pull_request:
     branches: [master, main]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   lint:
     name: Lint Code Base
@@ -44,6 +48,8 @@ jobs:
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           version: v1.29
           args: -c .github/linters/.golangci.yml
