@@ -43,9 +43,8 @@ jobs:
       if: always()
       run: docker-compose -f build/docker-compose.yml down -v
 
-    - name: Upload coverage
-      env:
-        COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
-      run: |
-        go get github.com/mattn/goveralls
-        $(go env GOPATH | awk 'BEGIN{FS=":"} {print $1}')/bin/goveralls -coverprofile=tests.out -service travis-ci -repotoken $COVERALLS_TOKEN
+    - uses: codecov/codecov-action@v2
+      with:
+        files: ./tests.out
+        fail_ci_if_error: true
+        verbose: true
