@@ -40,7 +40,7 @@ type MySQL struct {
 func WithInstance(ctx context.Context, db *sql.DB) (*MySQL, error) {
 	conn, err := db.Conn(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to connect to data storage: %w", err)
 	}
 
 	p := MySQL{conn: conn}
