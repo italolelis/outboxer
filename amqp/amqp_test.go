@@ -1,4 +1,4 @@
-package amqp
+package amqp_test
 
 import (
 	"context"
@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/italolelis/outboxer"
-	"github.com/streadway/amqp"
+	"github.com/italolelis/outboxer/amqp"
+	amqpraw "github.com/streadway/amqp"
 )
 
 func TestAMQP_EventStream(t *testing.T) {
@@ -18,24 +19,24 @@ func TestAMQP_EventStream(t *testing.T) {
 		endpoint = "amqp://localhost/"
 	}
 
-	conn, err := amqp.Dial(endpoint)
+	conn, err := amqpraw.Dial(endpoint)
 	if err != nil {
 		t.Fatalf("failed to connect to amqp: %s", err)
 	}
 
 	defer conn.Close()
 
-	es := NewAMQP(conn)
+	es := amqp.NewAMQP(conn)
 	if err := es.Send(ctx, &outboxer.OutboxMessage{
 		Payload: []byte("test payload"),
 		Options: map[string]interface{}{
-			ExchangeNameOption: "test",
-			ExchangeTypeOption: "topic",
-			RoutingKeyOption:   "test.send",
-			ExchangeDurable:    true,
-			ExchangeAutoDelete: false,
-			ExchangeInternal:   false,
-			ExchangeNoWait:     false,
+			amqp.ExchangeNameOption: "test",
+			amqp.ExchangeTypeOption: "topic",
+			amqp.RoutingKeyOption:   "test.send",
+			amqp.ExchangeDurable:    true,
+			amqp.ExchangeAutoDelete: false,
+			amqp.ExchangeInternal:   false,
+			amqp.ExchangeNoWait:     false,
 		},
 	}); err != nil {
 		t.Fatalf("an error was not expected: %s", err)
