@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/italolelis/outboxer/mysql"
+	"github.com/italolelis/outboxer/storage/mysql"
 )
 
 func ExampleMySQL() {

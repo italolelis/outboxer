@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/italolelis/outboxer/sqlserver"
+	"github.com/italolelis/outboxer/storage/sqlserver"
 )
 
 func ExampleSQLServer() {
