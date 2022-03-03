@@ -32,6 +32,7 @@ jobs:
 
     - name: Build localstack
       run: | 
+        sleep 10
         awslocal kinesis create-stream --stream-name test --shard-count 1
         make test
 
