@@ -11,9 +11,7 @@ import (
 	"github.com/italolelis/outboxer/lock"
 )
 
-var (
-	eventStoreRows = []string{"id", "dispatched", "dispatched_at", "payload", "options", "headers"}
-)
+var eventStoreRows = []string{"id", "dispatched", "dispatched_at", "payload", "options", "headers"}
 
 func TestMySQL_CloseSuccessfully(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())

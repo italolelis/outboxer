@@ -40,6 +40,7 @@ func TestSQLServer_WithInstance_must_return_SQLServerDataStore(t *testing.T) {
 		t.Errorf("Expected database name %s but got %s", "test", ds.DatabaseName)
 	}
 }
+
 func TestSQLServer_WithInstance_should_return_error_when_no_db_selected(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -83,6 +84,7 @@ func TestSQLServer_WithInstance_should_return_error_when_no_schema_selected(t *t
 		t.Fatalf("Expected ErrNoSchema to be returned when no schema selected : %s", err)
 	}
 }
+
 func TestSQLServer_should_add_message(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -97,7 +99,6 @@ func TestSQLServer_should_add_message(t *testing.T) {
 	initDatastoreMock(t, mock)
 
 	ds, err := WithInstance(ctx, db)
-
 	if err != nil {
 		t.Fatalf("failed to setup the data store: %s", err)
 	}
@@ -285,6 +286,7 @@ func TestSQLServer_should_remove_messages(t *testing.T) {
 		t.Fatalf("failed to remove messages: %s", err)
 	}
 }
+
 func initDatastoreMock(t *testing.T, mock sqlmock.Sqlmock) {
 	mock.ExpectQuery(`SELECT DB_NAME() `).
 		WillReturnRows(sqlmock.NewRows([]string{"DB_NAME()"}).AddRow("test"))

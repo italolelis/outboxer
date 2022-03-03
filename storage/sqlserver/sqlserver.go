@@ -120,8 +120,8 @@ func (s *SQLServer) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage
 	return nil
 }
 
-//checkBinaryParam is a fix for issue with mssql driver converting nil value in varbinary to nvarchar.
-//https://github.com/denisenkom/go-mssqldb/issues/530
+// checkBinaryParam is a fix for issue with mssql driver converting nil value in varbinary to nvarchar.
+// https://github.com/denisenkom/go-mssqldb/issues/530
 func checkBinaryParam(p outboxer.DynamicValues) outboxer.DynamicValues {
 	if p == nil {
 		return map[string]interface{}{}
@@ -187,7 +187,6 @@ func (s *SQLServer) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer
 	// nolint
 	rows, err := s.conn.QueryContext(ctx, fmt.Sprintf("SELECT TOP %d * FROM [%s].[%s] WHERE dispatched = 0",
 		batchSize, s.SchemaName, s.EventStoreTable))
-
 	if err != nil {
 		return events, fmt.Errorf("failed to get messages from the store: %w", err)
 	}
