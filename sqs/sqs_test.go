@@ -15,11 +15,9 @@ import (
 	"github.com/italolelis/outboxer"
 )
 
-func TestSQS_EventStream(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+var endpoint string = os.Getenv("SQS_ENDPOINT")
 
-	endpoint := os.Getenv("SQS_ENDPOINT")
+func getSQSClient() (*sqs.SQS, error) {
 	if endpoint == "" {
 		endpoint = "http://localhost:4566"
 	}
@@ -31,10 +29,20 @@ func TestSQS_EventStream(t *testing.T) {
 		Region:                        aws.String("us-east-1"),
 	})
 	if err != nil {
-		t.Fatalf("failed to setup an aws session: %s", err)
+		return nil, err
 	}
 
-	sqsClient := sqs.New(sess)
+	return sqs.New(sess), nil
+}
+
+func TestSQS_EventStream(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sqsClient, err := getSQSClient()
+	if err != nil {
+		t.Fatalf("failed to setup an aws session: %s", err)
+	}
 
 	tests := []struct {
 		message   string
@@ -74,7 +82,7 @@ func TestSQS_EventStream(t *testing.T) {
 		}
 
 		if tc.groupId != nil {
-			options[MessageGroupIdOption] = *tc.groupId
+			options[MessageGroupIDOption] = *tc.groupId
 		}
 
 		es := New(sqsClient)
