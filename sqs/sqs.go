@@ -18,11 +18,11 @@ const (
 	// ExplicitHashKeyOption is the explicit hash key option
 	DelaySecondsOption = "delay_seconds"
 
-	// MessageGroupIdOption is the grouping id sequence option
-	MessageGroupIdOption = "message_group_id"
+	// MessageGroupIDOption is the grouping id sequence option
+	MessageGroupIDOption = "message_group_id"
 
-	// MessageDedupIdOption is the deduplication id option
-	MessageDedupIdOption = "message_dedup_id"
+	// MessageDedupIDOption is the deduplication id option
+	MessageDedupIDOption = "message_dedup_id"
 )
 
 // SQS is the wrapper for the SQS library
@@ -33,8 +33,8 @@ type SQS struct {
 type options struct {
 	queueName    *string
 	delaySeconds *int64
-	msgGroupId   *string
-	msgDedupId   *string
+	msgGroupID   *string
+	msgDedupID   *string
 }
 
 type sqsOption func(*options)
@@ -57,8 +57,8 @@ func (r *SQS) Send(ctx context.Context, evt *outboxer.OutboxMessage) error {
 		QueueUrl:               opts.queueName,
 		MessageBody:            aws.String(string((evt.Payload))),
 		DelaySeconds:           opts.delaySeconds,
-		MessageGroupId:         opts.msgGroupId,
-		MessageDeduplicationId: opts.msgDedupId,
+		MessageGroupId:         opts.msgGroupID,
+		MessageDeduplicationId: opts.msgDedupID,
 	}
 
 	msgAttributes := r.parseHeaders(evt.Headers)
@@ -77,7 +77,7 @@ func (r *SQS) Send(ctx context.Context, evt *outboxer.OutboxMessage) error {
 func newOptions(opts ...sqsOption) *options {
 	opt := &options{
 		delaySeconds: nil,
-		msgDedupId:   nil,
+		msgDedupID:   nil,
 	}
 
 	for _, option := range opts {
@@ -112,9 +112,9 @@ func withDelaySeconds(opts outboxer.DynamicValues) sqsOption {
 }
 
 func withGroupID(opts outboxer.DynamicValues) sqsOption {
-	if data, ok := opts[MessageGroupIdOption]; ok {
+	if data, ok := opts[MessageGroupIDOption]; ok {
 		return func(opt *options) {
-			opt.msgGroupId = aws.String(data.(string))
+			opt.msgGroupID = aws.String(data.(string))
 		}
 	}
 
@@ -122,9 +122,9 @@ func withGroupID(opts outboxer.DynamicValues) sqsOption {
 }
 
 func withDedupID(opts outboxer.DynamicValues) sqsOption {
-	if data, ok := opts[MessageDedupIdOption]; ok {
+	if data, ok := opts[MessageDedupIDOption]; ok {
 		return func(opt *options) {
-			opt.msgDedupId = aws.String(data.(string))
+			opt.msgDedupID = aws.String(data.(string))
 		}
 	}
 
