@@ -13,24 +13,24 @@ import (
 )
 
 const (
-	// DefaultEventStoreTable is the default table name
+	// DefaultEventStoreTable is the default table name.
 	DefaultEventStoreTable = "event_store"
 )
 
 var (
-	// ErrLocked is used when we can't acquire an explicit lock
+	// ErrLocked is used when we can't acquire an explicit lock.
 	ErrLocked = errors.New("can't acquire lock")
 
-	// ErrNoDatabaseName is used when the database name is blank
+	// ErrNoDatabaseName is used when the database name is blank.
 	ErrNoDatabaseName = errors.New("no database name")
 
-	// ErrNoSchema is used when the schema name is blank
+	// ErrNoSchema is used when the schema name is blank.
 	ErrNoSchema = errors.New("no schema")
 )
 
-// Postgres is the implementation of the data store
+// Postgres is the implementation of the data store.
 type Postgres struct {
-	// Locking and unlocking need to use the same connection
+	// Locking and unlocking need to use the same connection.
 	conn     *sql.Conn
 	isLocked bool
 
@@ -39,7 +39,7 @@ type Postgres struct {
 	EventStoreTable string
 }
 
-// WithInstance creates a postgres data store with an existing db connection
+// WithInstance creates a postgres data store with an existing db connection.
 func WithInstance(ctx context.Context, db *sql.DB) (*Postgres, error) {
 	conn, err := db.Conn(ctx)
 	if err != nil {
@@ -75,7 +75,7 @@ func WithInstance(ctx context.Context, db *sql.DB) (*Postgres, error) {
 	return &p, nil
 }
 
-// Close closes the db connection
+// Close closes the db connection.
 func (p *Postgres) Close() error {
 	if err := p.conn.Close(); err != nil {
 		return fmt.Errorf("failed to close connection: %w", err)
@@ -84,7 +84,7 @@ func (p *Postgres) Close() error {
 	return nil
 }
 
-// GetEvents retrieves all the relevant events
+// GetEvents retrieves all the relevant events.
 func (p *Postgres) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.OutboxMessage, error) {
 	var events []*outboxer.OutboxMessage
 
@@ -108,7 +108,7 @@ func (p *Postgres) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.
 	return events, nil
 }
 
-// Add adds the message to the data store
+// Add adds the message to the data store.
 func (p *Postgres) Add(ctx context.Context, evt *outboxer.OutboxMessage) error {
 	tx, err := p.conn.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
@@ -132,7 +132,7 @@ func (p *Postgres) Add(ctx context.Context, evt *outboxer.OutboxMessage) error {
 	return nil
 }
 
-// AddWithinTx creates a transaction and then tries to execute anything within it
+// AddWithinTx creates a transaction and then tries to execute anything within it.
 func (p *Postgres) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage, fn func(outboxer.ExecerContext) error) error {
 	tx, err := p.conn.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
@@ -161,7 +161,7 @@ func (p *Postgres) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage,
 	return nil
 }
 
-// SetAsDispatched sets one message as dispatched
+// SetAsDispatched sets one message as dispatched.
 func (p *Postgres) SetAsDispatched(ctx context.Context, id int64) error {
 	query := fmt.Sprintf(`
 update %s
@@ -179,7 +179,7 @@ where id = $1;
 	return nil
 }
 
-// Remove removes old messages from the data store
+// Remove removes old messages from the data store.
 func (p *Postgres) Remove(ctx context.Context, dispatchedBefore time.Time, batchSize int32) error {
 	tx, err := p.conn.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
@@ -215,7 +215,7 @@ WHERE ctid IN
 	return nil
 }
 
-// Lock implements explicit locking
+// Lock implements explicit locking.
 // https://www.postgresql.org/docs/9.6/static/explicit-locking.html#ADVISORY-LOCKS
 func (p *Postgres) lock(ctx context.Context) error {
 	if p.isLocked {
@@ -239,7 +239,7 @@ func (p *Postgres) lock(ctx context.Context) error {
 	return nil
 }
 
-// Unlock is the implementation of the unlock for explicit locking
+// Unlock is the implementation of the unlock for explicit locking.
 func (p *Postgres) unlock(ctx context.Context) error {
 	if !p.isLocked {
 		return nil

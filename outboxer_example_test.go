@@ -9,7 +9,7 @@ import (
 
 	"github.com/italolelis/outboxer"
 	amqpOut "github.com/italolelis/outboxer/amqp"
-	"github.com/italolelis/outboxer/postgres"
+	"github.com/italolelis/outboxer/storage/postgres"
 	"github.com/streadway/amqp"
 )
 

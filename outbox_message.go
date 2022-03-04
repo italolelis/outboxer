@@ -4,11 +4,15 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 )
 
-// OutboxMessage represents a message that will be sent
+// ErrFailedToDecodeType is returned when the type of the value is not supported.
+var ErrFailedToDecodeType = errors.New("could not decode type")
+
+// OutboxMessage represents a message that will be sent.
 type OutboxMessage struct {
 	ID           int64
 	Dispatched   bool
@@ -18,10 +22,10 @@ type OutboxMessage struct {
 	Headers      DynamicValues
 }
 
-// DynamicValues is a map that can be serialized
+// DynamicValues is a map that can be serialized.
 type DynamicValues map[string]interface{}
 
-// Value return a driver.Value representation of the order items
+// Value return a driver.Value representation of the order items.
 func (p DynamicValues) Value() (driver.Value, error) {
 	if len(p) == 0 {
 		return nil, nil
@@ -30,7 +34,7 @@ func (p DynamicValues) Value() (driver.Value, error) {
 	return json.Marshal(p)
 }
 
-// Scan scans a database json representation into a []Item
+// Scan scans a database json representation into a []Item.
 func (p *DynamicValues) Scan(src interface{}) error {
 	v := reflect.ValueOf(src)
 	if !v.IsValid() || v.IsNil() {
@@ -41,5 +45,5 @@ func (p *DynamicValues) Scan(src interface{}) error {
 		return json.Unmarshal(data, &p)
 	}
 
-	return fmt.Errorf("could not not decode type %T -> %T", src, p)
+	return fmt.Errorf("could not not decode type %T -> %T: %w", src, p, ErrFailedToDecodeType)
 }

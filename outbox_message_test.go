@@ -1,7 +1,9 @@
-package outboxer
+package outboxer_test
 
 import (
 	"testing"
+
+	"github.com/italolelis/outboxer"
 )
 
 func TestOutboxMessage(t *testing.T) {
@@ -30,7 +32,7 @@ func TestOutboxMessage(t *testing.T) {
 }
 
 func testDynamicValuesScan(t *testing.T) {
-	dv := DynamicValues{}
+	dv := outboxer.DynamicValues{}
 	if err := dv.Scan([]byte(`{"key": "value"}`)); err != nil {
 		t.Fatalf("failed to scan DynamicValues value: %s", err)
 	}
@@ -53,7 +55,7 @@ func testDynamicValuesScan(t *testing.T) {
 }
 
 func testDynamicValuesValue(t *testing.T) {
-	dv := DynamicValues{}
+	dv := outboxer.DynamicValues{}
 	dv["key"] = "value"
 
 	v, err := dv.Value()
@@ -65,7 +67,7 @@ func testDynamicValuesValue(t *testing.T) {
 		t.Fatalf("driver.Value is not supposed to be nil: %s", err)
 	}
 
-	dv = DynamicValues{}
+	dv = outboxer.DynamicValues{}
 
 	v, err = dv.Value()
 	if err != nil {
