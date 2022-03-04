@@ -12,20 +12,20 @@ import (
 )
 
 const (
-	// QueueNameOption is the queue name option
+	// QueueNameOption is the queue name option.
 	QueueNameOption = "queue_name"
 
-	// ExplicitHashKeyOption is the explicit hash key option
+	// ExplicitHashKeyOption is the explicit hash key option.
 	DelaySecondsOption = "delay_seconds"
 
-	// MessageGroupIDOption is the grouping id sequence option
+	// MessageGroupIDOption is the grouping id sequence option.
 	MessageGroupIDOption = "message_group_id"
 
-	// MessageDedupIDOption is the deduplication id option
+	// MessageDedupIDOption is the deduplication id option.
 	MessageDedupIDOption = "message_dedup_id"
 )
 
-// SQS is the wrapper for the SQS library
+// SQS is the wrapper for the SQS library.
 type SQS struct {
 	conn sqsiface.SQSAPI
 }
@@ -39,12 +39,12 @@ type options struct {
 
 type sqsOption func(*options)
 
-// New creates a new instance of SQS
+// New creates a new instance of SQS.
 func New(conn sqsiface.SQSAPI) *SQS {
 	return &SQS{conn: conn}
 }
 
-// Send sends the message to the event stream
+// Send sends the message to the event stream.
 func (r *SQS) Send(ctx context.Context, evt *outboxer.OutboxMessage) error {
 	opts := newOptions(
 		withQueueName(evt.Options),
