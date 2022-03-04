@@ -1,9 +1,11 @@
 module github.com/italolelis/outboxer
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.4.1
-	github.com/aws/aws-sdk-go v1.40.49
+	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/aws/aws-sdk-go v1.43.11
 	github.com/streadway/amqp v0.0.0-20190214183023-884228600bc9
 )
 
-go 1.13
+require github.com/jmespath/go-jmespath v0.4.0 // indirect
+
+go 1.17

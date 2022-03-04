@@ -1,6 +1,6 @@
 run:
   deadline: 5m
-  tests: true
+  tests: false
   skip-dirs:
   - configs
   - charts

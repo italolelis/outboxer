@@ -13,20 +13,20 @@ import (
 )
 
 const (
-	// StreamNameOption is the stream name option
+	// StreamNameOption is the stream name option.
 	StreamNameOption = "stream_name"
 
-	// ExplicitHashKeyOption is the explicit hash key option
+	// ExplicitHashKeyOption is the explicit hash key option.
 	ExplicitHashKeyOption = "explicit_hash_key"
 
-	// PartitionKeyOption is the partition key option
+	// PartitionKeyOption is the partition key option.
 	PartitionKeyOption = "partition_key"
 
-	// SequenceNumberForOrderingOption is the sequence number for ordering option
+	// SequenceNumberForOrderingOption is the sequence number for ordering option.
 	SequenceNumberForOrderingOption = "partition_key"
 )
 
-// Kinesis is the wrapper for the Kinesis library
+// Kinesis is the wrapper for the Kinesis library.
 type Kinesis struct {
 	conn kinesisiface.KinesisAPI
 }
@@ -38,12 +38,12 @@ type options struct {
 	sequenceNumberForOrdering *string
 }
 
-// New creates a new instance of Kinesis
+// New creates a new instance of Kinesis.
 func New(conn kinesisiface.KinesisAPI) *Kinesis {
 	return &Kinesis{conn: conn}
 }
 
-// Send sends the message to the event stream
+// Send sends the message to the event stream.
 func (r *Kinesis) Send(ctx context.Context, evt *outboxer.OutboxMessage) error {
 	opts := r.parseOptions(evt.Options)
 

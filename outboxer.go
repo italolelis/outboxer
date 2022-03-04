@@ -11,20 +11,25 @@ import (
 	"time"
 )
 
+const (
+	messageBatchSize = 100
+	cleanUpBatchSize = 100
+)
+
 var (
-	// ErrMissingEventStream is used when no event stream is provided
+	// ErrMissingEventStream is used when no event stream is provided.
 	ErrMissingEventStream = errors.New("an event stream is required for the outboxer to work")
 
-	// ErrMissingDataStore is used when no data store is provided
+	// ErrMissingDataStore is used when no data store is provided.
 	ErrMissingDataStore = errors.New("a data store is required for the outboxer to work")
 )
 
-// ExecerContext defines the exec context method that is used within a transaction
+// ExecerContext defines the exec context method that is used within a transaction.
 type ExecerContext interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 }
 
-// DataStore defines the data store methods
+// DataStore defines the data store methods.
 type DataStore interface {
 	// Tries to find the given message in the outbox.
 	GetEvents(ctx context.Context, batchSize int32) ([]*OutboxMessage, error)
@@ -34,12 +39,12 @@ type DataStore interface {
 	Remove(ctx context.Context, since time.Time, batchSize int32) error
 }
 
-// EventStream defines the event stream methods
+// EventStream defines the event stream methods.
 type EventStream interface {
 	Send(context.Context, *OutboxMessage) error
 }
 
-// Outboxer implements the outbox pattern
+// Outboxer implements the outbox pattern.
 type Outboxer struct {
 	ds               DataStore
 	es               EventStream
@@ -53,13 +58,13 @@ type Outboxer struct {
 	okChan  chan struct{}
 }
 
-// New creates a new instance of Outboxer
+// New creates a new instance of Outboxer.
 func New(opts ...Option) (*Outboxer, error) {
 	o := Outboxer{
 		errChan:          make(chan error),
 		okChan:           make(chan struct{}),
-		messageBatchSize: 100,
-		cleanUpBatchSize: 100,
+		messageBatchSize: messageBatchSize,
+		cleanUpBatchSize: cleanUpBatchSize,
 	}
 
 	for _, opt := range opts {
@@ -77,22 +82,22 @@ func New(opts ...Option) (*Outboxer, error) {
 	return &o, nil
 }
 
-// ErrChan returns the error channel
+// ErrChan returns the error channel.
 func (o *Outboxer) ErrChan() <-chan error {
 	return o.errChan
 }
 
-// OkChan returns the ok channel that is used when each message is successfully delivered
+// OkChan returns the ok channel that is used when each message is successfully delivered.
 func (o *Outboxer) OkChan() <-chan struct{} {
 	return o.okChan
 }
 
-// Send sends a message
+// Send sends a message.
 func (o *Outboxer) Send(ctx context.Context, m *OutboxMessage) error {
 	return o.ds.Add(ctx, m)
 }
 
-// SendWithinTx encapsulate any database call within a transaction
+// SendWithinTx encapsulate any database call within a transaction.
 func (o *Outboxer) SendWithinTx(ctx context.Context, evt *OutboxMessage, fn func(ExecerContext) error) error {
 	return o.ds.AddWithinTx(ctx, evt, fn)
 }
@@ -153,7 +158,7 @@ func (o *Outboxer) StartCleanup(ctx context.Context) {
 	}
 }
 
-// Stop closes all channels
+// Stop closes all channels.
 func (o *Outboxer) Stop() {
 	close(o.errChan)
 	close(o.okChan)

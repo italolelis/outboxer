@@ -1,4 +1,4 @@
-package kinesis
+package kinesis_test
 
 import (
 	"context"
@@ -10,8 +10,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/kinesis"
+	kinesisraw "github.com/aws/aws-sdk-go/service/kinesis"
 	"github.com/italolelis/outboxer"
+	"github.com/italolelis/outboxer/kinesis"
 )
 
 func TestKinesis_EventStream(t *testing.T) {
@@ -35,8 +36,8 @@ func TestKinesis_EventStream(t *testing.T) {
 
 	streamName := aws.String("test")
 
-	kinesisClient := kinesis.New(sess)
-	if _, err := kinesisClient.CreateStreamWithContext(ctx, &kinesis.CreateStreamInput{
+	kinesisClient := kinesisraw.New(sess)
+	if _, err := kinesisClient.CreateStreamWithContext(ctx, &kinesisraw.CreateStreamInput{
 		ShardCount: aws.Int64(1),
 		StreamName: streamName,
 	}); err != nil {
@@ -50,16 +51,16 @@ func TestKinesis_EventStream(t *testing.T) {
 		}
 	}
 
-	err = kinesisClient.WaitUntilStreamExistsWithContext(ctx, &kinesis.DescribeStreamInput{StreamName: streamName})
+	err = kinesisClient.WaitUntilStreamExistsWithContext(ctx, &kinesisraw.DescribeStreamInput{StreamName: streamName})
 	if err != nil {
 		t.Fatalf("failed to wait for stream creation: %s", err)
 	}
 
-	es := New(kinesisClient)
+	es := kinesis.New(kinesisClient)
 	if err := es.Send(ctx, &outboxer.OutboxMessage{
 		Payload: []byte("test payload"),
 		Options: map[string]interface{}{
-			StreamNameOption: *streamName,
+			kinesis.StreamNameOption: *streamName,
 		},
 	}); err != nil {
 		t.Fatalf("an error was not expected: %s", err)

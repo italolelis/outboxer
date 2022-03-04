@@ -1,3 +1,6 @@
+# Please see the documentation for all configuration options:
+# https://help.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -6,12 +9,17 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 10
 
-  - package-ecosystem: "gomod"
+  - package-ecosystem: "docker"
     directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "gomod"
+    directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
     assignees:
       - "italolelis"
     reviewers: 
       - "italolelis"
-    open-pull-requests-limit: 10
