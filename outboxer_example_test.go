@@ -10,7 +10,7 @@ import (
 	"github.com/italolelis/outboxer"
 	amqpOut "github.com/italolelis/outboxer/es/amqp"
 	"github.com/italolelis/outboxer/storage/postgres"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // nolint

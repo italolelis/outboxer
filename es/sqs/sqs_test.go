@@ -4,68 +4,47 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/aws/request"
 	sqsraw "github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/italolelis/outboxer"
 	"github.com/italolelis/outboxer/es/sqs"
 )
 
-var endpoint string = os.Getenv("SQS_ENDPOINT")
+type mockedSQS struct {
+	sqsiface.SQSAPI
+	Resp sqsraw.ReceiveMessageOutput
+}
 
-func getSQSClient() (*sqsraw.SQS, error) {
-	if endpoint == "" {
-		endpoint = "http://localhost:4566"
-	}
-
-	sess, err := session.NewSession(&aws.Config{
-		CredentialsChainVerboseErrors: aws.Bool(true),
-		Credentials:                   credentials.NewStaticCredentials("foo", "var", ""),
-		Endpoint:                      aws.String(endpoint),
-		Region:                        aws.String("us-east-1"),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return sqsraw.New(sess), nil
+func (m mockedSQS) SendMessageWithContext(aws.Context, *sqsraw.SendMessageInput, ...request.Option) (*sqsraw.SendMessageOutput, error) {
+	return nil, nil
 }
 
 func TestSQS_EventStream(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	sqsClient, err := getSQSClient()
-	if err != nil {
-		t.Fatalf("failed to setup an aws session: %s", err)
-	}
+	sqsClient := &mockedSQS{}
 
 	tests := []struct {
 		message   string
-		queueName *string
+		queueName string
 		attrs     map[string]*string
 		groupId   *string
 	}{
-		{message: "test payload", queueName: aws.String("test"), attrs: nil, groupId: nil},
-		{message: "test fifo payload", queueName: aws.String("test.fifo"), attrs: map[string]*string{"FifoQueue": aws.String("true")}, groupId: aws.String("123")},
+		{message: "test payload", queueName: "test", attrs: nil, groupId: nil},
+		{message: "test fifo payload", queueName: "test.fifo", attrs: map[string]*string{"FifoQueue": aws.String("true")}, groupId: aws.String("123")},
 	}
 
 	for _, tc := range tests {
-
 		queueName := tc.queueName
-		queueArn := aws.String(fmt.Sprintf("%v/000000000000/%v", endpoint, *queueName))
+		queueArn := fmt.Sprintf("%v/000000000000/%v", "https://test", queueName)
 
 		var err error
-		if len(tc.attrs) > 0 {
-			_, err = sqsClient.CreateQueueWithContext(ctx, &sqsraw.CreateQueueInput{QueueName: queueName, Attributes: tc.attrs})
-		} else {
-			_, err = sqsClient.CreateQueueWithContext(ctx, &sqsraw.CreateQueueInput{QueueName: queueName})
-		}
 
 		if err != nil {
 			var kErr awserr.Error
@@ -79,7 +58,7 @@ func TestSQS_EventStream(t *testing.T) {
 		}
 
 		options := map[string]interface{}{
-			sqs.QueueNameOption: *queueArn,
+			sqs.QueueNameOption: queueArn,
 		}
 
 		if tc.groupId != nil {
@@ -91,12 +70,10 @@ func TestSQS_EventStream(t *testing.T) {
 			Payload: []byte(tc.message),
 			Options: options,
 			Headers: map[string]interface{}{
-				"HeaderKey": *queueArn,
+				"HeaderKey": queueArn,
 			},
 		}); err != nil {
 			t.Fatalf("an error was not expected: %s", err)
 		}
-
 	}
-
 }
