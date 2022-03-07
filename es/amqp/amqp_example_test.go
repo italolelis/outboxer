@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/italolelis/outboxer"
-	amqpOut "github.com/italolelis/outboxer/amqp"
-	"github.com/streadway/amqp"
+	amqpOut "github.com/italolelis/outboxer/es/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func ExampleNewAMQP() {
