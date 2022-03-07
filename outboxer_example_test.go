@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/italolelis/outboxer"
-	amqpOut "github.com/italolelis/outboxer/amqp"
+	amqpOut "github.com/italolelis/outboxer/es/amqp"
 	"github.com/italolelis/outboxer/storage/postgres"
 	"github.com/streadway/amqp"
 )
