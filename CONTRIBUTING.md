@@ -11,7 +11,7 @@ to this document in a pull request.
 
 This project adheres to the Contributor Covenant [code of conduct](CODE_OF_CONDUCT.md).
 By participating, you are expected to uphold this code.
-Please report unacceptable behavior to [italolelis@gmail.com](mailto:me@italovietro.com).
+Please report unacceptable behavior to [me@italovietro.com](mailto:me@italovietro.com).
 
 We accept contributions via Pull Requests on [Github](https://github.com/italolelis/outboxer).
 
@@ -55,13 +55,13 @@ Both issue lists are sorted by total number of comments. While not perfect, numb
 
 ### Local Workspace Setup
 
-For local development use the `docker` containers.
+For local development we use [devcontainers](https://code.visualstudio.com/docs/remote/containers). That will give you a fully functional evnironment to develop and test your code.
 
-Run `docker-compose up -d` from `build` directory to bring up `rabbitmq` and `localstack`.
+To start, just open the project in VsCode and make sure to have the Remote extension installed.
 
-RabbitMQ management portal will be available at `http://localhost:15672/`.
+When the container is up, you'll have a fully working dev environmnet to work. You can now run `docker-compose -f build/docker-compose.yaml up -d` to bring up `rabbitmq`, `postgres` and `localstack`.
 
-A local `Kinesis` setup using `localstack` will be available at `http://localhost:4568`.
+A local `Kinesis` and `SQS` setup using `localstack` will be available at `http://localhost:4566`.
 
 ### Pull Requests
 
