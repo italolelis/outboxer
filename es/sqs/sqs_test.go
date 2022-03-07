@@ -1,4 +1,4 @@
-package sqs
+package sqs_test
 
 import (
 	"context"
@@ -11,13 +11,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sqs"
+	sqsraw "github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/italolelis/outboxer"
+	"github.com/italolelis/outboxer/es/sqs"
 )
 
 var endpoint string = os.Getenv("SQS_ENDPOINT")
 
-func getSQSClient() (*sqs.SQS, error) {
+func getSQSClient() (*sqsraw.SQS, error) {
 	if endpoint == "" {
 		endpoint = "http://localhost:4566"
 	}
@@ -32,7 +33,7 @@ func getSQSClient() (*sqs.SQS, error) {
 		return nil, err
 	}
 
-	return sqs.New(sess), nil
+	return sqsraw.New(sess), nil
 }
 
 func TestSQS_EventStream(t *testing.T) {
@@ -61,9 +62,9 @@ func TestSQS_EventStream(t *testing.T) {
 
 		var err error
 		if len(tc.attrs) > 0 {
-			_, err = sqsClient.CreateQueueWithContext(ctx, &sqs.CreateQueueInput{QueueName: queueName, Attributes: tc.attrs})
+			_, err = sqsClient.CreateQueueWithContext(ctx, &sqsraw.CreateQueueInput{QueueName: queueName, Attributes: tc.attrs})
 		} else {
-			_, err = sqsClient.CreateQueueWithContext(ctx, &sqs.CreateQueueInput{QueueName: queueName})
+			_, err = sqsClient.CreateQueueWithContext(ctx, &sqsraw.CreateQueueInput{QueueName: queueName})
 		}
 
 		if err != nil {
@@ -78,14 +79,14 @@ func TestSQS_EventStream(t *testing.T) {
 		}
 
 		options := map[string]interface{}{
-			QueueNameOption: *queueArn,
+			sqs.QueueNameOption: *queueArn,
 		}
 
 		if tc.groupId != nil {
-			options[MessageGroupIDOption] = *tc.groupId
+			options[sqs.MessageGroupIDOption] = *tc.groupId
 		}
 
-		es := New(sqsClient)
+		es := sqs.New(sqsClient)
 		if err := es.Send(ctx, &outboxer.OutboxMessage{
 			Payload: []byte(tc.message),
 			Options: options,
