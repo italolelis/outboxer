@@ -99,12 +99,18 @@ for {
 
 Outboxer comes with a few implementations of Data Stores and Event Streams.
 
+### Data Stores
+
 - [Postgres DataStore](storage/postgres/)
 - [MySQL DataStore](storage/mysql/)
 - [SQLServer DataStore](storage/sqlserver/)
-- [AMQP EventStream](amqp/)
-- [Kinesis EventStream](kinesis/)
-- [SQS EventStream](sqs/)
+
+### Event Streams
+
+- [AMQP EventStream](es/amqp/)
+- [Kinesis EventStream](es/kinesis/)
+- [SQS EventStream](es/sqs/)
+- [GCP PubSub](es/pubsub/)
 
 ## Contributing
 
