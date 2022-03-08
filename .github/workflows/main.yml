@@ -40,7 +40,7 @@ jobs:
         make test
 
     - name: Test
-      run: make test
+      run: make test-integration
 
     - name: Down the stack
       if: always()
