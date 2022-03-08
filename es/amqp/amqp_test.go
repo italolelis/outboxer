@@ -2,29 +2,31 @@ package amqp_test
 
 import (
 	"context"
+	"os"
 	"testing"
 
-	amqptest "github.com/NeowayLabs/wabbit/amqp"
-	"github.com/NeowayLabs/wabbit/amqptest/server"
 	"github.com/italolelis/outboxer"
 	"github.com/italolelis/outboxer/es/amqp"
+	amqpraw "github.com/rabbitmq/amqp091-go"
 )
 
 func TestAMQP_EventStream(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	fakeServer := server.NewServer("amqp://localhost:5672/%2f")
-	fakeServer.Start()
+	endpoint := os.Getenv("ES_DSN")
+	if endpoint == "" {
+		endpoint = "amqp://localhost/"
+	}
 
-	conn, err := amqptest.Dial("amqp://localhost:5672/%2f")
+	conn, err := amqpraw.Dial(endpoint)
 	if err != nil {
-		t.Fatalf("an error was not expected: %s", err)
+		t.Fatalf("failed to connect to amqp: %s", err)
 	}
 
 	defer conn.Close()
 
-	es := amqp.NewAMQP(conn.Connection)
+	es := amqp.NewAMQP(conn)
 	if err := es.Send(ctx, &outboxer.OutboxMessage{
 		Payload: []byte("test payload"),
 		Options: map[string]interface{}{
