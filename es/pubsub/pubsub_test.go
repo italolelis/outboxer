@@ -8,7 +8,6 @@ import (
 	"cloud.google.com/go/pubsub/pstest"
 	"github.com/italolelis/outboxer"
 	"github.com/italolelis/outboxer/es/pubsub"
-	"github.com/stretchr/testify/assert"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 )
@@ -57,9 +56,13 @@ func TestPublishMessages(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			err = p.Send(ctx, c.message)
 			if c.shouldFail {
-				assert.Error(t, err)
+				if err == nil {
+					t.Fatalf("an error was expected: %s", err)
+				}
 			} else {
-				assert.NoError(t, err)
+				if err != nil {
+					t.Fatalf("an error was not expected: %s", err)
+				}
 			}
 		})
 	}
