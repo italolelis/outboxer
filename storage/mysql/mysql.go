@@ -122,8 +122,7 @@ func (p *MySQL) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage, fn
 		return fmt.Errorf("transaction start failed: %w", err)
 	}
 
-	err = fn(tx)
-	if err != nil {
+	if err := fn(tx); err != nil {
 		return err
 	}
 

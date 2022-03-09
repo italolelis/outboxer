@@ -139,8 +139,7 @@ func (p *Postgres) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage,
 		return fmt.Errorf("transaction start failed: %w", err)
 	}
 
-	err = fn(tx)
-	if err != nil {
+	if err := fn(tx); err != nil {
 		return err
 	}
 
