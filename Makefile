@@ -11,6 +11,9 @@ test:
 	@echo "$(OK_COLOR)==> Running tests$(NO_COLOR)"
 	@go test -v -cover -covermode=atomic -coverprofile=tests.out ./...
 
+generate:
+	@go generate ./...
+
 test-integration:
 	@echo "$(OK_COLOR)==> Running tests$(NO_COLOR)"
 	@go test --tags=integration -v -cover -covermode=atomic -coverprofile=tests.out ./...

@@ -27,3 +27,8 @@ services:
     volumes:
       - "/tmp/localstack:/tmp/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+
+  kafka:
+    image: bashj79/kafka-kraft
+    ports:
+      - "9092:9092"
