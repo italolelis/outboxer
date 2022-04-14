@@ -58,8 +58,6 @@ o, err := outboxer.New(
     outboxer.WithDataStore(ds),
     outboxer.WithEventStream(es),
     outboxer.WithCheckInterval(1*time.Second),
-    outboxer.WithCleanupInterval(5*time.Second),
-    outboxer.WithCleanUpBefore(time.Now().AddDate(0, 0, -5)),
 )
 if err != nil {
     fmt.Printf("could not create an outboxer instance: %s", err)
