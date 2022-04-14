@@ -2,11 +2,11 @@ package kafka_test
 
 import (
 	"context"
+	"github.com/italolelis/outboxer/es/kafka"
 	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/italolelis/outboxer"
-	"github.com/italolelis/outboxer/kafka"
 )
 
 func ExampleNewSyncKafka() {
