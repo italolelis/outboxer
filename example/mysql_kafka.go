@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/Shopify/sarama"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/google/uuid"
 	"github.com/italolelis/outboxer"
 	"github.com/italolelis/outboxer/es/kafka"
 	"github.com/italolelis/outboxer/storage/mysql"
@@ -17,7 +18,7 @@ func main() {
 	defer cancel()
 
 	// Creates database connection
-	db, err := sql.Open("mysql", "dns_str")
+	db, err := sql.Open("mysql", "user:pass@(localhost:5578)/core?charset=utf8&parseTime=true")
 	if err != nil {
 		fmt.Printf("could not connect to mysql: %s", err)
 		return
@@ -29,7 +30,11 @@ func main() {
 	cfg.Producer.RequiredAcks = sarama.WaitForAll
 	cfg.Producer.Return.Successes = true
 	cfg.Producer.Return.Errors = true
-	client, err := sarama.NewClient([]string{"localhost:9092"}, cfg)
+	client, err := sarama.NewClient([]string{
+		"kafka-development-01.b2bdev.pro:9092",
+		"kafka-development-02.b2bdev.pro:9092",
+		"kafka-development-03.b2bdev.pro:9092",
+	}, cfg)
 	if err != nil {
 		fmt.Printf("could not connect to kafka: %s", err)
 		return
@@ -57,8 +62,6 @@ func main() {
 		outboxer.WithDataStore(ds),
 		outboxer.WithEventStream(es),
 		outboxer.WithCheckInterval(1*time.Second),
-		outboxer.WithCleanupInterval(5*time.Second),
-		outboxer.WithCleanUpBefore(time.Now().AddDate(0, 0, -5)),
 	)
 	if err != nil {
 		fmt.Printf("could not create an outboxer instance: %s", err)
@@ -74,6 +77,9 @@ func main() {
 		Payload: []byte("test payload"),
 		Options: outboxer.DynamicValues{
 			kafka.Topic: "zorin_test",
+		},
+		Headers: outboxer.DynamicValues{
+			"uuid": uuid.New().String(),
 		},
 	}); err != nil {
 		fmt.Printf("could not send message: %s", err)

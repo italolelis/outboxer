@@ -46,9 +46,6 @@ func ExampleNew() {
 		outboxer.WithDataStore(ds),
 		outboxer.WithEventStream(es),
 		outboxer.WithCheckInterval(1*time.Second),
-		outboxer.WithCleanupInterval(5*time.Second),
-		outboxer.WithCleanUpBefore(time.Now().AddDate(0, 0, -5)),
-		outboxer.WithCleanUpBatchSize(10),
 		outboxer.WithMessageBatchSize(10),
 	)
 	if err != nil {

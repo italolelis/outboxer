@@ -5,6 +5,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/aws/aws-sdk-go v1.43.14
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/google/uuid v1.1.2
 	github.com/rabbitmq/amqp091-go v1.3.0
 	google.golang.org/api v0.70.0
 	google.golang.org/grpc v1.44.0

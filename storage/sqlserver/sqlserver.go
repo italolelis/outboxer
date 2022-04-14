@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
-
 	"github.com/italolelis/outboxer"
 	"github.com/italolelis/outboxer/lock"
 )
@@ -136,45 +134,11 @@ func (s *SQLServer) SetAsDispatched(ctx context.Context, id int64) error {
 UPDATE [%s].[%s]
 SET
     dispatched = 1,
-    dispatched_at = GETDATE(),
-    options = null,
-	headers = null
+    dispatched_at = GETDATE()
 WHERE id = @p1;
 `, s.SchemaName, s.EventStoreTable)
 	if _, err := s.conn.ExecContext(ctx, query, id); err != nil {
 		return fmt.Errorf("failed to set message as dispatched: %w", err)
-	}
-
-	return nil
-}
-
-// Remove removes old messages from the data store.
-func (s *SQLServer) Remove(ctx context.Context, dispatchedBefore time.Time, batchSize int32) error {
-	tx, err := s.conn.BeginTx(ctx, &sql.TxOptions{})
-	if err != nil {
-		return fmt.Errorf("transaction start failed: %w", err)
-	}
-
-	q := `
-DELETE FROM [%[1]s].[%[2]s]
-WHERE id IN
-(
-    SELECT TOP %d id
-    FROM %[%[1]s].[%[2]s]
-    WHERE
-        "dispatched" = true AND
-        "dispatched_at" < @p1
-)
-`
-	// nolint
-	query := fmt.Sprintf(q, s.SchemaName, s.EventStoreTable, batchSize)
-	if _, err := tx.ExecContext(ctx, query, dispatchedBefore); err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to remove messages from the data store: %w", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("transaction commit failed: %w", err)
 	}
 
 	return nil

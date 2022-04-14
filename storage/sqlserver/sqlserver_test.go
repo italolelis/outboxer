@@ -257,36 +257,6 @@ func TestSQLServer_should_set_as_dispatched(t *testing.T) {
 	}
 }
 
-func TestSQLServer_should_remove_messages(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-
-	defer db.Close()
-
-	initDatastoreMock(t, mock)
-
-	ds, err := WithInstance(ctx, db)
-	if err != nil {
-		t.Fatalf("failed to setup the data store: %s", err)
-	}
-
-	defer ds.Close()
-
-	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM [test_schema].[event_store] WHERE id IN`)).
-		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectCommit()
-
-	if err := ds.Remove(ctx, time.Now(), 10); err != nil {
-		t.Fatalf("failed to remove messages: %s", err)
-	}
-}
-
 func initDatastoreMock(t *testing.T, mock sqlmock.Sqlmock) {
 	mock.ExpectQuery(`SELECT DB_NAME() `).
 		WillReturnRows(sqlmock.NewRows([]string{"DB_NAME()"}).AddRow("test"))

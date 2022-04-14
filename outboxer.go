@@ -13,7 +13,6 @@ import (
 
 const (
 	messageBatchSize = 100
-	cleanUpBatchSize = 100
 )
 
 var (
@@ -36,7 +35,6 @@ type DataStore interface {
 	Add(ctx context.Context, m *OutboxMessage) error
 	AddWithinTx(ctx context.Context, m *OutboxMessage, fn func(ExecerContext) error) error
 	SetAsDispatched(ctx context.Context, id int64) error
-	Remove(ctx context.Context, since time.Time, batchSize int32) error
 }
 
 // EventStream defines the event stream methods.
@@ -49,9 +47,6 @@ type Outboxer struct {
 	ds               DataStore
 	es               EventStream
 	checkInterval    time.Duration
-	cleanUpInterval  time.Duration
-	cleanUpBefore    time.Time
-	cleanUpBatchSize int32
 	messageBatchSize int32
 
 	errChan chan error
@@ -64,7 +59,6 @@ func New(opts ...Option) (*Outboxer, error) {
 		errChan:          make(chan error),
 		okChan:           make(chan struct{}),
 		messageBatchSize: messageBatchSize,
-		cleanUpBatchSize: cleanUpBatchSize,
 	}
 
 	for _, opt := range opts {
@@ -144,14 +138,8 @@ func (o *Outboxer) StartDispatcher(ctx context.Context) {
 
 // StartCleanup starts the cleanup process, that makes sure old messages are removed from the data store.
 func (o *Outboxer) StartCleanup(ctx context.Context) {
-	ticker := time.NewTicker(o.cleanUpInterval)
-
 	for {
 		select {
-		case <-ticker.C:
-			if err := o.ds.Remove(ctx, o.cleanUpBefore, o.cleanUpBatchSize); err != nil {
-				o.errChan <- err
-			}
 		case <-ctx.Done():
 			return
 		}

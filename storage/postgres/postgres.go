@@ -6,8 +6,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
-
 	"github.com/italolelis/outboxer"
 	"github.com/italolelis/outboxer/lock"
 )
@@ -166,49 +164,11 @@ func (p *Postgres) SetAsDispatched(ctx context.Context, id int64) error {
 update %s
 set
     dispatched = true,
-    dispatched_at = now(),
-    options = '{}',
-	headers = '{}'
+    dispatched_at = now()
 where id = $1;
 `, p.EventStoreTable)
 	if _, err := p.conn.ExecContext(ctx, query, id); err != nil {
 		return fmt.Errorf("failed to set message as dispatched: %w", err)
-	}
-
-	return nil
-}
-
-// Remove removes old messages from the data store.
-func (p *Postgres) Remove(ctx context.Context, dispatchedBefore time.Time, batchSize int32) error {
-	tx, err := p.conn.BeginTx(ctx, &sql.TxOptions{})
-	if err != nil {
-		return fmt.Errorf("transaction start failed: %w", err)
-	}
-
-	q := `
-DELETE FROM %[1]s
-WHERE ctid IN
-(
-    select ctid
-    from %[1]s
-    where
-        "dispatched" = true and
-        "dispatched_at" < $1
-    limit %d
-)
-`
-
-	query := fmt.Sprintf(q, p.EventStoreTable, batchSize)
-	if _, err := tx.ExecContext(ctx, query, dispatchedBefore); err != nil {
-		if err := tx.Rollback(); err != nil {
-			return err
-		}
-
-		return fmt.Errorf("failed to remove messages from the data store: %w", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("transaction commit failed: %w", err)
 	}
 
 	return nil

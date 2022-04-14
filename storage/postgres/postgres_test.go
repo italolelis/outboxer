@@ -71,10 +71,6 @@ func TestPostgres_AddSuccessfully(t *testing.T) {
 			t.Fatalf("failed to set message as dispatched: %s", err)
 		}
 	}
-
-	if err := ds.Remove(ctx, time.Now(), 10); err != nil {
-		t.Fatalf("failed to remove messages: %s", err)
-	}
 }
 
 func TestPostgres_WithInstanceNoDB(t *testing.T) {

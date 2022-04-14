@@ -42,17 +42,6 @@ func (inmem *inMemDS) AddWithinTx(ctx context.Context, m *outboxer.OutboxMessage
 	return inmem.Add(ctx, m)
 }
 
-func (inmem *inMemDS) Remove(ctx context.Context, cleanUpBefore time.Time, batchSize int32) error {
-	for i, m := range inmem.data {
-		if m.DispatchedAt.Time == cleanUpBefore {
-			inmem.data = append(inmem.data[:i], inmem.data[i+1:]...)
-			return nil
-		}
-	}
-
-	return errors.New("event not found")
-}
-
 type inMemES struct {
 	ok bool
 }
@@ -74,9 +63,6 @@ func TestOutboxer_Send(t *testing.T) {
 		outboxer.WithDataStore(&inMemDS{}),
 		outboxer.WithEventStream(&inMemES{true}),
 		outboxer.WithCheckInterval(1*time.Second),
-		outboxer.WithCleanupInterval(5*time.Second),
-		outboxer.WithCleanUpBefore(time.Now().AddDate(0, 0, -5)),
-		outboxer.WithCleanUpBatchSize(10),
 		outboxer.WithMessageBatchSize(10),
 	)
 	if err != nil {
@@ -131,9 +117,6 @@ func TestOutboxer_SendWithinTx(t *testing.T) {
 		outboxer.WithDataStore(&inMemDS{}),
 		outboxer.WithEventStream(&inMemES{true}),
 		outboxer.WithCheckInterval(1*time.Second),
-		outboxer.WithCleanupInterval(5*time.Second),
-		outboxer.WithCleanUpBefore(time.Now().AddDate(0, 0, -5)),
-		outboxer.WithCleanUpBatchSize(10),
 		outboxer.WithMessageBatchSize(10),
 	)
 	if err != nil {
