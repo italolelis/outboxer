@@ -50,7 +50,7 @@ type Outboxer struct {
 	es               EventStream
 	checkInterval    time.Duration
 	cleanUpInterval  time.Duration
-	cleanUpBefore    time.Time
+	cleanUpOlderThan time.Duration
 	cleanUpBatchSize int32
 	messageBatchSize int32
 
@@ -148,8 +148,8 @@ func (o *Outboxer) StartCleanup(ctx context.Context) {
 
 	for {
 		select {
-		case <-ticker.C:
-			if err := o.ds.Remove(ctx, o.cleanUpBefore, o.cleanUpBatchSize); err != nil {
+		case t := <-ticker.C:
+			if err := o.ds.Remove(ctx, t.Add(-1*o.cleanUpOlderThan), o.cleanUpBatchSize); err != nil {
 				o.errChan <- err
 			}
 		case <-ctx.Done():

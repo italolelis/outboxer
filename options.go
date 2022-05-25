@@ -33,10 +33,10 @@ func WithCleanupInterval(t time.Duration) Option {
 	}
 }
 
-// WithCleanUpBefore sets the date that the clean up process should start removing from.
-func WithCleanUpBefore(t time.Time) Option {
+// WithCleanUpOlderThan sets the date that the clean up process should start removing from.
+func WithCleanUpOlderThan(t time.Duration) Option {
 	return func(o *Outboxer) {
-		o.cleanUpBefore = t
+		o.cleanUpOlderThan = t
 	}
 }
 
