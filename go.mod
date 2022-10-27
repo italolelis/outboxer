@@ -1,7 +1,7 @@
 module github.com/italolelis/outboxer
 
 require (
-	cloud.google.com/go/pubsub v1.24.0
+	cloud.google.com/go/pubsub v1.26.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/aws/aws-sdk-go v1.44.121
 	github.com/rabbitmq/amqp091-go v1.3.0
@@ -10,9 +10,9 @@ require (
 )
 
 require (
-	cloud.google.com/go v0.102.1 // indirect
+	cloud.google.com/go v0.104.0 // indirect
 	cloud.google.com/go/compute v1.10.0 // indirect
-	cloud.google.com/go/iam v0.3.0 // indirect
+	cloud.google.com/go/iam v0.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
