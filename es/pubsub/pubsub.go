@@ -3,6 +3,7 @@ package pubsub
 
 import (
 	"context"
+	"fmt"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/italolelis/outboxer"
@@ -36,10 +37,14 @@ func (p *Pubsub) Send(ctx context.Context, evt *outboxer.OutboxMessage) error {
 	opts := p.parseOptions(evt.Options)
 
 	topic := p.client.Topic(opts.topicName)
-	_ = topic.Publish(ctx, &pubsub.Message{
+	res := topic.Publish(ctx, &pubsub.Message{
 		Data:        evt.Payload,
 		OrderingKey: opts.orderingKey,
 	})
+
+	if _, err := res.Get(ctx); err != nil {
+		return fmt.Errorf("error when getting generated id: %v", err)
+	}
 
 	return nil
 }

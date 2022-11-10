@@ -24,10 +24,21 @@ func TestPublishMessages(t *testing.T) {
 				Payload: []byte("hello world"),
 				Options: map[string]interface{}{
 					pubsub.TopicNameOption:   "test",
-					pubsub.OrderingKeyOption: "test",
+					pubsub.OrderingKeyOption: "",
 				},
 			},
 			shouldFail: false,
+		},
+		{
+			name: "sending a message to non existent topic",
+			message: &outboxer.OutboxMessage{
+				Payload: []byte("hello world"),
+				Options: map[string]interface{}{
+					pubsub.TopicNameOption:   "non-existent",
+					pubsub.OrderingKeyOption: "",
+				},
+			},
+			shouldFail: true,
 		},
 	}
 
@@ -48,6 +59,8 @@ func TestPublishMessages(t *testing.T) {
 		t.Fatalf("an error was not expected: %s", err)
 	}
 
+	mustCreateTopic(ctx, t, client, "test")
+
 	p := pubsub.New(client)
 
 	for _, c := range cases {
@@ -66,4 +79,12 @@ func TestPublishMessages(t *testing.T) {
 			}
 		})
 	}
+}
+
+func mustCreateTopic(ctx context.Context, t *testing.T, pc *pubsubraw.Client, id string) *pubsubraw.Topic {
+	top, err := pc.CreateTopic(ctx, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return top
 }
