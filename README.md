@@ -9,34 +9,29 @@ Outboxer is a go library that implements the [outbox pattern](http://www.kamilgr
 
 ## Getting Started
 
-Outboxer was designed to simplify the tough work of orchestrating message reliabilty. Essentially we are trying to solve this question:
+Outboxer simplifies the challenging work of orchestrating message reliability. Essentially we are trying to solve this question:
 
 > How can producers reliably send messages when the broker/consumer is unavailable?
 
-If you have a distributed system architecture and especially is dealing 
+If you have a distributed system architecture and especially mainly deal 
 with [Event Driven Architecture](https://martinfowler.com/articles/201701-event-driven.html), you might 
 want to use *outboxer*.
 
-The first thing to do is include the package in your project
+The first thing to do is include the package in your project.
 
 ```sh
 go get github.com/italolelis/outboxer
 ```
 
-### Initial Configuration
-Let's setup a simple example where you are using `RabbitMQ` and `Postgres` as your outbox pattern components:
+### Usage
+
+Let's setup a simple example where you are using Google's `PubSub` and `Postgres` as your outbox pattern components:
 
 ```go
 ctx, cancel := context.WithCancel(context.Background())
 defer cancel()
 
 db, err := sql.Open("postgres", os.Getenv("DS_DSN"))
-if err != nil {
-    fmt.Printf("could not connect to amqp: %s", err)
-    return
-}
-
-conn, err := amqp.Dial(os.Getenv("ES_DSN"))
 if err != nil {
     fmt.Printf("could not connect to amqp: %s", err)
     return
@@ -50,8 +45,14 @@ if err != nil {
 }
 defer ds.Close()
 
-// we create an event stream passing the amqp connection
-es := amqpOut.NewAMQP(conn)
+// we create an event stream passing the pusub connection
+client, err := pubsub.NewClient(ctx, os.Getenv("GCP_PROJECT_ID"))
+if err != nil {
+    fmt.Printf("failed to connect to gcp: %s", err)
+    return
+}
+
+es := pubsubOut.New(client)
 
 // now we create an outboxer instance passing the data store and event stream
 o, err := outboxer.New(
@@ -114,7 +115,7 @@ Outboxer comes with a few implementations of Data Stores and Event Streams.
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests to us.
 
 ## License
 
