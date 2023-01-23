@@ -4,7 +4,7 @@ require (
 	cloud.google.com/go/pubsub v1.26.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/aws/aws-sdk-go v1.44.121
-	github.com/rabbitmq/amqp091-go v1.3.0
+	github.com/rabbitmq/amqp091-go v1.6.0
 	google.golang.org/api v0.103.0
 	google.golang.org/grpc v1.50.1
 )
