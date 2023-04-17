@@ -23,7 +23,7 @@ jobs:
           repository: ${{github.event.pull_request.head.repo.full_name}}
 
       - name: Lint Code Base
-        uses: github/super-linter@v4
+        uses: github/super-linter@v5
         if: github.event_name == 'pull_request'
         env:
           DEFAULT_BRANCH: master
