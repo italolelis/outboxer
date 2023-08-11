@@ -61,7 +61,6 @@ linters:
   enable:
     - bodyclose
     - errcheck
-    - gci
     - gocritic
     - gofumpt
     - goimports
