@@ -10,16 +10,16 @@ func TestOutboxMessage(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		scenario string
 		function func(*testing.T)
+		scenario string
 	}{
 		{
-			"check if DynamicValues Scan works for message",
 			testDynamicValuesScan,
+			"check if DynamicValues Scan works for message",
 		},
 		{
-			"check if DynamicValues Value works for message",
 			testDynamicValuesValue,
+			"check if DynamicValues Value works for message",
 		},
 	}
 

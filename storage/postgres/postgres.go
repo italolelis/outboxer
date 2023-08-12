@@ -260,7 +260,7 @@ func (p *Postgres) unlock(ctx context.Context) error {
 }
 
 func (p *Postgres) ensureTable(ctx context.Context) (err error) {
-	if err = p.lock(ctx); err != nil {
+	if err := p.lock(ctx); err != nil {
 		return err
 	}
 
