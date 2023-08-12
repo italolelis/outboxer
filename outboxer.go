@@ -46,16 +46,15 @@ type EventStream interface {
 
 // Outboxer implements the outbox pattern.
 type Outboxer struct {
+	cleanUpBefore    time.Time
 	ds               DataStore
 	es               EventStream
+	errChan          chan error
+	okChan           chan struct{}
 	checkInterval    time.Duration
 	cleanUpInterval  time.Duration
-	cleanUpBefore    time.Time
 	cleanUpBatchSize int32
 	messageBatchSize int32
-
-	errChan chan error
-	okChan  chan struct{}
 }
 
 // New creates a new instance of Outboxer.

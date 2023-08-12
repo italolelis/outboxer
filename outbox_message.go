@@ -14,12 +14,12 @@ var ErrFailedToDecodeType = errors.New("could not decode type")
 
 // OutboxMessage represents a message that will be sent.
 type OutboxMessage struct {
-	ID           int64
-	Dispatched   bool
-	DispatchedAt sql.NullTime
-	Payload      []byte
 	Options      DynamicValues
 	Headers      DynamicValues
+	DispatchedAt sql.NullTime
+	Payload      []byte
+	ID           int64
+	Dispatched   bool
 }
 
 // DynamicValues is a map that can be serialized.
