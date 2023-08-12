@@ -30,13 +30,12 @@ var (
 
 // Postgres is the implementation of the data store.
 type Postgres struct {
-	// Locking and unlocking need to use the same connection.
-	conn     *sql.Conn
-	isLocked bool
-
 	DatabaseName    string
 	SchemaName      string
 	EventStoreTable string
+	// Locking and unlocking need to use the same connection.
+	conn     *sql.Conn
+	isLocked bool
 }
 
 // WithInstance creates a postgres data store with an existing db connection.

@@ -29,12 +29,11 @@ var (
 
 // SQLServer implementation of the data store.
 type SQLServer struct {
-	conn     *sql.Conn
-	isLocked bool
-
 	SchemaName      string
 	DatabaseName    string
 	EventStoreTable string
+	conn            *sql.Conn
+	isLocked        bool
 }
 
 // WithInstance creates a SQLServer data store with an existing db connection.
