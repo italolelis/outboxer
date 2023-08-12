@@ -50,7 +50,7 @@ func WithInstance(ctx context.Context, db *sql.DB) (*SQLServer, error) {
 		return nil, err
 	}
 
-	if len(s.DatabaseName) == 0 {
+	if s.DatabaseName == "" {
 		return nil, ErrNoDatabaseName
 	}
 
@@ -58,11 +58,11 @@ func WithInstance(ctx context.Context, db *sql.DB) (*SQLServer, error) {
 		return nil, err
 	}
 
-	if len(s.SchemaName) == 0 {
+	if s.SchemaName == "" {
 		return nil, ErrNoSchema
 	}
 
-	if len(s.EventStoreTable) == 0 {
+	if s.EventStoreTable == "" {
 		s.EventStoreTable = DefaultEventStoreTable
 	}
 
@@ -108,7 +108,9 @@ func (s *SQLServer) AddWithinTx(ctx context.Context, evt *outboxer.OutboxMessage
 	query := fmt.Sprintf(`INSERT INTO [%s].[%s] (payload, options, headers) VALUES (@p1, @p2, @p3)`, s.SchemaName, s.EventStoreTable)
 
 	if _, err := tx.ExecContext(ctx, query, evt.Payload, checkBinaryParam(evt.Options), checkBinaryParam(evt.Headers)); err != nil {
-		tx.Rollback()
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
 		return fmt.Errorf("failed to insert message into the data store: %w", err)
 	}
 
@@ -169,7 +171,9 @@ WHERE id IN
 	// nolint
 	query := fmt.Sprintf(q, s.SchemaName, s.EventStoreTable, batchSize)
 	if _, err := tx.ExecContext(ctx, query, dispatchedBefore); err != nil {
-		tx.Rollback()
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
 		return fmt.Errorf("failed to remove messages from the data store: %w", err)
 	}
 
@@ -254,7 +258,7 @@ func (s *SQLServer) unlock(ctx context.Context) error {
 }
 
 func (s *SQLServer) ensureTable(ctx context.Context) (err error) {
-	if err = s.lock(ctx); err != nil {
+	if err := s.lock(ctx); err != nil {
 		return err
 	}
 

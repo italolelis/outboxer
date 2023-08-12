@@ -54,13 +54,13 @@ func WithInstance(ctx context.Context, db *sql.DB) (*MySQL, error) {
 		return nil, err
 	}
 
-	if len(databaseName.String) == 0 {
+	if databaseName.String == "" {
 		return nil, ErrNoDatabaseName
 	}
 
 	p.DatabaseName = databaseName.String
 
-	if len(p.EventStoreTable) == 0 {
+	if p.EventStoreTable == "" {
 		p.EventStoreTable = DefaultEventStoreTable
 	}
 
@@ -245,7 +245,7 @@ func (p *MySQL) unlock(ctx context.Context) error {
 }
 
 func (p *MySQL) ensureTable(ctx context.Context) (err error) {
-	if err = p.lock(ctx); err != nil {
+	if err := p.lock(ctx); err != nil {
 		return err
 	}
 
