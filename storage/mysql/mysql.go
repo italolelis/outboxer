@@ -80,7 +80,7 @@ func (p *MySQL) Close() error {
 
 // GetEvents retrieves all the relevant events.
 func (p *MySQL) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.OutboxMessage, error) {
-	var events []*outboxer.OutboxMessage
+	events := make([]*outboxer.OutboxMessage, 0, batchSize)
 
 	// nolint
 	rows, err := p.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM %s WHERE dispatched = false LIMIT %d", p.EventStoreTable, batchSize))
