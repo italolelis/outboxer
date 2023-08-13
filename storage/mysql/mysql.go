@@ -28,12 +28,10 @@ var (
 
 // MySQL is the implementation of the data store.
 type MySQL struct {
-	// Locking and unlocking need to use the same connection.
-	conn     *sql.Conn
-	isLocked bool
-
+	conn            *sql.Conn
 	DatabaseName    string
 	EventStoreTable string
+	isLocked        bool
 }
 
 // WithInstance creates a mysql data store with an existing db connection.
