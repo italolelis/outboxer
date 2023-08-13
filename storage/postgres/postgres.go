@@ -30,12 +30,11 @@ var (
 
 // Postgres is the implementation of the data store.
 type Postgres struct {
+	conn            *sql.Conn
 	DatabaseName    string
 	SchemaName      string
 	EventStoreTable string
-	// Locking and unlocking need to use the same connection.
-	conn     *sql.Conn
-	isLocked bool
+	isLocked        bool
 }
 
 // WithInstance creates a postgres data store with an existing db connection.
@@ -85,7 +84,7 @@ func (p *Postgres) Close() error {
 
 // GetEvents retrieves all the relevant events.
 func (p *Postgres) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.OutboxMessage, error) {
-	var events []*outboxer.OutboxMessage
+	events := make([]*outboxer.OutboxMessage, 0, batchSize)
 
 	// nolint
 	rows, err := p.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM %s WHERE dispatched = false LIMIT %d", p.EventStoreTable, batchSize))

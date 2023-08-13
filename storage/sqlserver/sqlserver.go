@@ -29,10 +29,10 @@ var (
 
 // SQLServer implementation of the data store.
 type SQLServer struct {
+	conn            *sql.Conn
 	SchemaName      string
 	DatabaseName    string
 	EventStoreTable string
-	conn            *sql.Conn
 	isLocked        bool
 }
 
@@ -185,7 +185,7 @@ WHERE id IN
 
 // GetEvents retrieves all the relevant events.
 func (s *SQLServer) GetEvents(ctx context.Context, batchSize int32) ([]*outboxer.OutboxMessage, error) {
-	var events []*outboxer.OutboxMessage
+	events := make([]*outboxer.OutboxMessage, 0, batchSize)
 	// nolint
 	rows, err := s.conn.QueryContext(ctx, fmt.Sprintf("SELECT TOP %d * FROM [%s].[%s] WHERE dispatched = 0",
 		batchSize, s.SchemaName, s.EventStoreTable))
