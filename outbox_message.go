@@ -10,7 +10,7 @@ import (
 )
 
 // ErrFailedToDecodeType is returned when the type of the value is not supported.
-var ErrFailedToDecodeType = errors.New("could not decode type")
+var ErrFailedToDecodeType = errors.New("failed to decode type")
 
 // OutboxMessage represents a message that will be sent.
 type OutboxMessage struct {
@@ -36,8 +36,12 @@ func (p DynamicValues) Value() (driver.Value, error) {
 
 // Scan scans a database json representation into a []Item.
 func (p *DynamicValues) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+
 	v := reflect.ValueOf(src)
-	if !v.IsValid() || v.IsNil() {
+	if !v.IsValid() {
 		return nil
 	}
 
