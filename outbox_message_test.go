@@ -1,6 +1,7 @@
 package outboxer_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/italolelis/outboxer"
@@ -76,5 +77,49 @@ func testDynamicValuesValue(t *testing.T) {
 
 	if v != nil {
 		t.Fatalf("driver.Value is supposed to be nil: %s", err)
+	}
+}
+
+func TestDynamicValues_Scan_InvalidType(t *testing.T) {
+	p := &outboxer.DynamicValues{}
+
+	// call Scan with an invalid type
+	err := p.Scan(123)
+
+	// assert that the error is not nil
+	if err == nil {
+		t.Error("expected an error, but got nil")
+	}
+
+	// assert that the error message contains the expected text
+	expectedErrMsg := "could not not decode type int -> *outboxer.DynamicValues: failed to decode type"
+	if !strings.Contains(err.Error(), expectedErrMsg) {
+		t.Errorf("expected error message to contain %q, but got %q", expectedErrMsg, err.Error())
+	}
+}
+
+func TestDynamicValues_Scan_InvalidSrc(t *testing.T) {
+	p := &outboxer.DynamicValues{}
+
+	// call Scan with an invalid src
+	err := p.Scan(nil)
+
+	// assert that the error is nil
+	if err != nil {
+		t.Errorf("expected nil error, but got %s", err)
+	}
+
+	// call Scan with an invalid src
+	err = p.Scan((*int)(nil))
+
+	// assert that the error is not nil
+	if err == nil {
+		t.Error("expected an error, but got nil")
+	}
+
+	// assert that the error message contains the expected text
+	expectedErrMsg := "could not not decode type *int -> *outboxer.DynamicValues: failed to decode type"
+	if !strings.Contains(err.Error(), expectedErrMsg) {
+		t.Errorf("expected error message to contain %q, but got %q", expectedErrMsg, err.Error())
 	}
 }
