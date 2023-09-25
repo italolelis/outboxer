@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go v1.45.15
 	github.com/rabbitmq/amqp091-go v1.3.0
 	google.golang.org/api v0.142.0
-	google.golang.org/grpc v1.58.1
+	google.golang.org/grpc v1.58.2
 )
 
 require (
