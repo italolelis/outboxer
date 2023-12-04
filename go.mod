@@ -3,7 +3,7 @@ module github.com/italolelis/outboxer
 require (
 	cloud.google.com/go/pubsub v1.33.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/aws/aws-sdk-go v1.47.3
+	github.com/aws/aws-sdk-go v1.48.11
 	github.com/rabbitmq/amqp091-go v1.9.0
 	google.golang.org/api v0.149.0
 	google.golang.org/grpc v1.59.0
